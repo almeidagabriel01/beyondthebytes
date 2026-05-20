@@ -20,8 +20,10 @@ model User {
   role          Role           @default(STAFF)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  refreshTokens RefreshToken[]
-  patients      Patient[]
+  refreshTokens       RefreshToken[]
+  patients            Patient[]
+  appointments        Appointment[] @relation("AppointmentUser")
+  createdAppointments Appointment[] @relation("AppointmentCreatedBy")
 }
 
 model RefreshToken {
@@ -51,8 +53,69 @@ model Patient {
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
 
-  createdBy User @relation(fields: [createdById], references: [id])
+  createdBy    User          @relation(fields: [createdById], references: [id])
+  appointments Appointment[]
 
   @@index([fullName])
   @@index([email])
+}
+
+enum AppointmentType {
+  CONSULTA
+  RETORNO
+  AVALIACAO
+  PROCEDIMENTO
+}
+
+enum AppointmentStatus {
+  AGENDADO
+  CONFIRMADO
+  AGUARDANDO
+  EM_ATENDIMENTO
+  REALIZADO
+  CANCELADO
+}
+
+model Appointment {
+  id              String            @id @default(cuid())
+  patientId       String
+  userId          String
+  startsAt        DateTime
+  endsAt          DateTime
+  durationMinutes Int               @default(30)
+  type            AppointmentType
+  insurance       String
+  value           Decimal?          @db.Decimal(10, 2)
+  observations    String?
+  status          AppointmentStatus @default(AGENDADO)
+  createdById     String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  cancelledAt     DateTime?
+  cancelReason    String?
+
+  patient   Patient            @relation(fields: [patientId], references: [id])
+  user      User               @relation("AppointmentUser", fields: [userId], references: [id])
+  createdBy User               @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
+  events    AppointmentEvent[]
+
+  @@index([userId, startsAt])
+  @@index([patientId, startsAt])
+  @@index([status, startsAt])
+  @@index([startsAt])
+}
+
+model AppointmentEvent {
+  id            String      @id @default(cuid())
+  appointmentId String
+  action        String
+  fromStatus    String?
+  toStatus      String?
+  byUserId      String
+  payload       Json?
+  createdAt     DateTime    @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
 }
