@@ -115,7 +115,7 @@ export default function Sidebar() {
           <span className="material-symbols-outlined text-[20px] leading-none" aria-hidden="true">
             account_circle
           </span>
-          <span className="flex-1 truncate text-left">{me?.email ?? '...'}</span>
+          <span className="flex-1 truncate text-left">{me?.name || me?.email || '...'}</span>
           <span className="material-symbols-outlined text-sm leading-none" aria-hidden="true">
             unfold_more
           </span>

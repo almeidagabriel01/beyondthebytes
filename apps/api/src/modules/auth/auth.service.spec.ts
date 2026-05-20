@@ -52,6 +52,7 @@ describe('AuthService', () => {
     const dbUser = {
       id: 'cuid-123',
       email,
+      name: 'Administrador',
       passwordHash: '$argon2id$hashed',
       role: 'ADMIN' as const,
       createdAt: new Date(),
@@ -64,7 +65,12 @@ describe('AuthService', () => {
 
       const result = await service.validateUser(email, password);
 
-      expect(result).toEqual({ id: dbUser.id, email: dbUser.email, role: dbUser.role });
+      expect(result).toEqual({
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        role: dbUser.role,
+      });
       expect(result).not.toHaveProperty('passwordHash');
     });
 
@@ -93,6 +99,7 @@ describe('AuthService', () => {
     const userPayload = {
       id: 'cuid-123',
       email: 'admin@medschedule.local',
+      name: 'Administrador',
       role: 'ADMIN' as const,
     };
 
@@ -109,6 +116,7 @@ describe('AuthService', () => {
       expect(result.user).toEqual({
         id: userPayload.id,
         email: userPayload.email,
+        name: userPayload.name,
         role: userPayload.role,
       });
     });
@@ -140,7 +148,12 @@ describe('AuthService', () => {
       familyId: 'family-uuid',
       revokedAt: null,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      user: { id: 'cuid-123', email: 'admin@medschedule.local', role: 'ADMIN' as const },
+      user: {
+        id: 'cuid-123',
+        email: 'admin@medschedule.local',
+        name: 'Administrador',
+        role: 'ADMIN' as const,
+      },
     };
 
     it('rotates tokens on valid refresh — returns new accessToken and refreshToken', async () => {

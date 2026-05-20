@@ -15,6 +15,7 @@ export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 export const UserSchema = z.object({
   id: z.string().cuid(),
   email: z.string().email(),
+  name: z.string(),
   role: z.enum(['ADMIN', 'STAFF']),
 });
 export type User = z.infer<typeof UserSchema>;

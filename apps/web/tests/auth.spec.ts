@@ -20,9 +20,9 @@ test('authenticated user can access /dashboard', async ({ page }) => {
   await expect(page).not.toHaveURL(/\/login/);
 });
 
-test('sidebar shows logged-in user email', async ({ page }) => {
+test('sidebar shows logged-in user name', async ({ page }) => {
   await page.goto('/dashboard');
-  await expect(page.getByText('admin@medschedule.local')).toBeVisible();
+  await expect(page.getByText('Administrador')).toBeVisible();
 });
 
 test('logout clears session and redirects to /login', async ({ page }) => {

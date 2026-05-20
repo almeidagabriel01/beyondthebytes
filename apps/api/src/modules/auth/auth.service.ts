@@ -8,6 +8,7 @@ import { env } from '../../config/env';
 interface SafeUser {
   id: string;
   email: string;
+  name: string;
   role: 'ADMIN' | 'STAFF';
 }
 
@@ -29,7 +30,7 @@ export class AuthService {
     if (!user) return null;
     const isValid = await argon2.verify(user.passwordHash, password);
     if (!isValid) return null;
-    return { id: user.id, email: user.email, role: user.role };
+    return { id: user.id, email: user.email, name: user.name, role: user.role };
   }
 
   async login(user: SafeUser): Promise<LoginResult> {
@@ -74,6 +75,7 @@ export class AuthService {
     const safeUser: SafeUser = {
       id: record.user.id,
       email: record.user.email,
+      name: record.user.name,
       role: record.user.role,
     };
     const {
@@ -112,11 +114,11 @@ export class AuthService {
     const familyId = existingFamilyId ?? randomUUID();
     const jti = randomUUID();
     const accessToken = this.jwtService.sign(
-      { sub: user.id, email: user.email, role: user.role },
+      { sub: user.id, email: user.email, name: user.name, role: user.role },
       { secret: env().JWT_SECRET, expiresIn: '15m' },
     );
     const refreshToken = this.jwtService.sign(
-      { sub: user.id, email: user.email, role: user.role, familyId, jti },
+      { sub: user.id, email: user.email, name: user.name, role: user.role, familyId, jti },
       { secret: env().JWT_REFRESH_SECRET, expiresIn: '7d' },
     );
     return { accessToken, refreshToken, tokenHash: this._sha256(refreshToken), familyId };

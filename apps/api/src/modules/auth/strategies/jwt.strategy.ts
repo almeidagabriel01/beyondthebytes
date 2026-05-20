@@ -7,6 +7,7 @@ import { env } from '../../../config/env';
 interface JwtPayload {
   sub: string;
   email: string;
+  name: string;
   role: 'ADMIN' | 'STAFF';
 }
 
@@ -23,6 +24,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   validate(payload: JwtPayload) {
-    return { id: payload.sub, email: payload.email, role: payload.role };
+    return { id: payload.sub, email: payload.email, name: payload.name, role: payload.role };
   }
 }
