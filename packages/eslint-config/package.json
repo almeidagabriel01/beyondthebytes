@@ -1,0 +1,18 @@
+{
+  "name": "@medschedule/eslint-config",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.mjs",
+    "./next": "./next.mjs"
+  },
+  "peerDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-security": "^3.0.0",
+    "eslint-plugin-sonarjs": "^2.0.0",
+    "eslint-plugin-unicorn": "^55.0.0"
+  }
+}
