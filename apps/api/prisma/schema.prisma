@@ -21,6 +21,7 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
+  patients      Patient[]
 }
 
 model RefreshToken {
@@ -35,4 +36,23 @@ model RefreshToken {
 
   @@index([userId])
   @@index([familyId])
+}
+
+model Patient {
+  id           String    @id @default(cuid())
+  fullName     String
+  cpf          String    @unique
+  phone        String
+  birthDate    DateTime  @db.Date
+  email        String?
+  observations String?
+  createdById  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([fullName])
+  @@index([email])
 }
