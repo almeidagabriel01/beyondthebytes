@@ -8,6 +8,7 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { PatientsModule } from './modules/patients/patients.module';
 
 const _env = validateEnv();
 
@@ -37,6 +38,7 @@ const pinoTransport =
     PrismaModule,
     HealthModule,
     AuthModule,
+    PatientsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

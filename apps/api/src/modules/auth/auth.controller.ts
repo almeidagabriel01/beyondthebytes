@@ -22,6 +22,7 @@ import { env } from '../../config/env';
 interface AuthenticatedUser {
   id: string;
   email: string;
+  name: string;
   role: 'ADMIN' | 'STAFF';
 }
 
