@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+out/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Turbo
+.turbo/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+pino*.log
+
+# Test
+coverage/
+playwright-report/
+test-results/
+
+# Prisma
+prisma/generated/
