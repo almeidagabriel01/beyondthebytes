@@ -33,7 +33,7 @@ export default function Sidebar() {
     queryKey: ['me'],
     queryFn: fetchMe,
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes — role changes take effect on next login
+    staleTime: 5 * 60 * 1000,
   });
 
   const logoutMutation = useMutation({
@@ -51,82 +51,80 @@ export default function Sidebar() {
       router.push('/login');
     },
     onError: () => {
-      // Even on error, redirect to login (cookies may be cleared by API)
       queryClient.clear();
       router.push('/login');
     },
   });
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar">
+    <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar py-6">
       {/* Brand */}
-      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-6">
-        <span
-          className="material-symbols-outlined text-2xl text-sidebar-primary leading-none"
-          aria-hidden="true"
+      <div className="px-6 mb-8">
+        <h1 className="text-xl font-bold leading-tight text-white">MedSchedule</h1>
+        <p className="text-xs leading-tight text-slate-400 mt-0.5">Medical SaaS</p>
+      </div>
+
+      {/* Novo Agendamento CTA */}
+      <div className="px-4 mb-6">
+        <button
+          type="button"
+          className="w-full flex items-center justify-center gap-2 rounded-lg bg-sidebar-primary py-3 px-4 text-xs font-semibold tracking-wider text-white shadow-sm transition-colors hover:opacity-90"
         >
-          medical_services
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold leading-tight text-sidebar-primary-foreground">
-            MedSchedule
-          </p>
-          <p className="truncate text-xs leading-tight text-sidebar-foreground/60">Medical SaaS</p>
-        </div>
+          <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden="true">
+            add
+          </span>
+          Novo Agendamento
+        </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navegação principal">
-        <ul className="space-y-0.5" role="list">
-          {navItems.map(({ href, label, icon }) => {
-            const isActive = pathname.startsWith(href);
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'border-l-2 border-sidebar-primary bg-[#312e81] text-white'
-                      : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                  )}
-                >
-                  <span
-                    className="material-symbols-outlined text-[20px] leading-none"
-                    aria-hidden="true"
-                  >
-                    {icon}
-                  </span>
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <nav className="flex-1 overflow-y-auto px-2 space-y-1" aria-label="Navegação principal">
+        {navItems.map(({ href, label, icon }) => {
+          const isActive = pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={isActive ? 'page' : undefined}
+              className={cn(
+                'mx-2 my-1 flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200',
+                isActive
+                  ? 'bg-sidebar-primary text-white shadow-md'
+                  : 'text-slate-400 hover:bg-[#1e293b] hover:text-white',
+              )}
+            >
+              <span
+                className="material-symbols-outlined text-[20px] leading-none"
+                aria-hidden="true"
+                style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+              >
+                {icon}
+              </span>
+              {label}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* User section */}
-      <div className="shrink-0 border-t border-sidebar-border p-3 space-y-1">
-        {/* User info */}
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground">
+      <div className="mt-auto px-4 pt-4 border-t border-[#1e293b] space-y-0.5">
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-slate-400 transition-all hover:bg-[#1e293b] hover:text-white"
+        >
           <span className="material-symbols-outlined text-[20px] leading-none" aria-hidden="true">
             account_circle
           </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-medium">{me?.email ?? '...'}</p>
-            <p className="truncate text-xs text-sidebar-foreground/60 capitalize">
-              {me?.role?.toLowerCase() ?? ''}
-            </p>
-          </div>
-        </div>
-
-        {/* Logout button */}
+          <span className="flex-1 truncate text-left">{me?.email ?? '...'}</span>
+          <span className="material-symbols-outlined text-sm leading-none" aria-hidden="true">
+            unfold_more
+          </span>
+        </button>
         <button
           type="button"
           onClick={() => logoutMutation.mutate()}
           disabled={logoutMutation.isPending}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground disabled:opacity-60"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-slate-400 transition-all hover:bg-[#1e293b] hover:text-white disabled:opacity-60"
           aria-label="Sair da conta"
         >
           <span className="material-symbols-outlined text-[20px] leading-none" aria-hidden="true">

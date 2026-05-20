@@ -118,10 +118,10 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
-                className="block text-xs font-semibold tracking-widest"
+                className="block text-xs font-semibold tracking-wider"
                 style={{ color: '#1b1b23' }}
               >
-                E-MAIL
+                E-mail
               </label>
               <div className="relative group">
                 <div
@@ -168,17 +168,18 @@ export default function LoginPage() {
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="password"
-                  className="block text-xs font-semibold tracking-widest"
+                  className="block text-xs font-semibold tracking-wider"
                   style={{ color: '#1b1b23' }}
                 >
-                  SENHA
+                  Senha
                 </label>
-                <span
-                  className="text-xs font-semibold"
-                  style={{ color: '#4648d4', cursor: 'default' }}
+                <button
+                  type="button"
+                  className="text-[11px] font-medium transition-colors focus:outline-none"
+                  style={{ color: '#4648d4' }}
                 >
                   Esqueceu a senha?
-                </span>
+                </button>
               </div>
               <div className="relative group">
                 <div
@@ -235,10 +236,10 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loginMutation.isPending}
-              className="w-full flex items-center justify-center py-3.5 px-4 rounded-lg text-xs font-semibold tracking-widest shadow-sm transition-all duration-200 mt-2 focus:outline-none active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center py-3.5 px-4 rounded-lg text-xs font-semibold tracking-wider shadow-sm transition-all duration-200 mt-2 focus:outline-none active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90"
               style={{ backgroundColor: '#4648d4', color: '#ffffff' }}
             >
-              {loginMutation.isPending ? 'ENTRANDO...' : 'ENTRAR'}
+              {loginMutation.isPending ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
         </div>
@@ -251,11 +252,15 @@ export default function LoginPage() {
             borderTop: '1px solid rgba(199,196,215,0.3)',
           }}
         >
-          <p className="text-sm" style={{ color: '#464554' }}>
+          <p className="text-[13px]" style={{ color: '#464554' }}>
             Não tem uma conta?{' '}
-            <span className="text-xs font-semibold" style={{ color: '#4648d4' }}>
+            <button
+              type="button"
+              className="ml-1 text-xs font-semibold tracking-wider transition-colors focus:outline-none"
+              style={{ color: '#4648d4' }}
+            >
               Solicite acesso à sua clínica
-            </span>
+            </button>
           </p>
         </div>
       </div>
