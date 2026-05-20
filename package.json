@@ -15,10 +15,17 @@
   "devDependencies": {
     "@commitlint/cli": "^19.3.0",
     "@commitlint/config-conventional": "^19.2.2",
+    "@typescript-eslint/eslint-plugin": "^8",
+    "@typescript-eslint/parser": "^8",
+    "eslint": "^9",
+    "eslint-plugin-security": "^3",
+    "eslint-plugin-sonarjs": "^2",
+    "eslint-plugin-unicorn": "^55",
     "husky": "^9.1.0",
     "lint-staged": "^15.2.0",
     "prettier": "^3.3.0",
-    "turbo": "^2.3.0"
+    "turbo": "^2.3.0",
+    "typescript-eslint": "^8"
   },
   "packageManager": "pnpm@9.15.0",
   "engines": {
@@ -26,7 +33,11 @@
     "pnpm": ">=9.0.0"
   },
   "lint-staged": {
-    "*.{ts,tsx,mjs,cjs,js}": ["eslint --fix --max-warnings 0"],
-    "*.{ts,tsx,mjs,cjs,js,json,md,yaml,yml,css}": ["prettier --write"]
+    "*.{ts,tsx,mjs,cjs,js}": [
+      "eslint --fix --max-warnings 0"
+    ],
+    "*.{ts,tsx,mjs,cjs,js,json,md,yaml,yml,css}": [
+      "prettier --write"
+    ]
   }
 }
