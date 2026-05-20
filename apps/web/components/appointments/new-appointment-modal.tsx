@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useForm, Controller, type Resolver } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
-  CreateAppointmentSchema,
   INSURANCE_OPTIONS,
   SLOT_DURATION_OPTIONS,
   getOpenSlots,
@@ -20,16 +20,6 @@ import { cn } from '@/lib/utils';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type PatientSuggestion = { id: string; fullName: string; cpf: string };
-
-type FormValues = {
-  patientId: string;
-  startsAt: string;
-  durationMinutes: number;
-  type: 'CONSULTA' | 'RETORNO' | 'AVALIACAO' | 'PROCEDIMENTO';
-  insurance: string;
-  value: string;
-  observations: string;
-};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -49,6 +39,24 @@ function parseCurrency(masked: string): number | undefined {
 function todayIso(): string {
   return format(new Date(), 'yyyy-MM-dd');
 }
+
+const FormSchema = z.object({
+  patientId: z.string().min(1, 'Selecione um paciente'),
+  startsAt: z.string().min(1, 'Selecione um horário disponível'),
+  durationMinutes: z.union([z.literal(30), z.literal(45), z.literal(60)]),
+  type: z.enum(['CONSULTA', 'RETORNO', 'AVALIACAO', 'PROCEDIMENTO'] as const, {
+    errorMap: () => ({ message: 'Selecione o tipo de atendimento' }),
+  }),
+  insurance: z.string().min(1, 'Selecione um convênio'),
+  value: z
+    .string()
+    .optional()
+    .refine((v) => !v || parseCurrency(v) !== undefined, {
+      message: 'Informe um valor válido (ex: R$ 150,00)',
+    }),
+  observations: z.string().max(1000, 'Máximo de 1000 caracteres').optional(),
+});
+type FormValues = z.infer<typeof FormSchema>;
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -98,7 +106,7 @@ export function NewAppointmentModal({ defaultDate, onClose }: NewAppointmentModa
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(CreateAppointmentSchema) as unknown as Resolver<FormValues>,
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       patientId: '',
       startsAt: '',
@@ -153,7 +161,7 @@ export function NewAppointmentModal({ defaultDate, onClose }: NewAppointmentModa
       type: data.type,
       insurance: data.insurance,
       observations: data.observations || undefined,
-      value: isParticular ? parseCurrency(data.value) : undefined,
+      value: isParticular && data.value ? parseCurrency(data.value) : undefined,
     };
     mutation.mutate(dto);
   });

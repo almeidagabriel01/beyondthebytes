@@ -136,7 +136,8 @@ export class PatientsService {
         LEFT JOIN "User" u ON u.id = p."createdById"
         WHERE p."deletedAt" IS NULL
           AND (
-            p."fullName" % ${search}
+            p."fullName" ILIKE ${'%' + search + '%'}
+            OR p."fullName" % ${search}
             ${digitClause}
           )
         ${cursorClause}
