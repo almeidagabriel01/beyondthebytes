@@ -137,7 +137,6 @@ export class PatientsService {
         WHERE p."deletedAt" IS NULL
           AND (
             p."fullName" % ${search}
-            OR p.email % ${search}
             ${digitClause}
           )
         ${cursorClause}
