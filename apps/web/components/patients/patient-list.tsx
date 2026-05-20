@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PatientsListResponse, PatientResponse } from '@medschedule/shared';
 import { clientEnv } from '@/lib/env';
@@ -77,7 +78,12 @@ function PatientRow({ patient, onEdit, onDelete }: PatientRowProps) {
     <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors group">
       <PatientAvatar name={patient.fullName} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{patient.fullName}</p>
+        <Link
+          href={`/pacientes/${patient.id}`}
+          className="text-sm font-medium text-gray-900 truncate hover:text-blue-600 hover:underline transition-colors block"
+        >
+          {patient.fullName}
+        </Link>
         <p className="text-xs text-gray-500">{formatCpfDisplay(patient.cpf)}</p>
       </div>
       <p className="text-xs text-gray-400 hidden sm:block">{patient.phone}</p>
