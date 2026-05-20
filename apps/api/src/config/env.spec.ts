@@ -15,7 +15,6 @@ describe('validateEnv', () => {
 
   afterEach(() => {
     for (const key of Object.keys(validEnv)) {
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete process.env[key];
     }
   });

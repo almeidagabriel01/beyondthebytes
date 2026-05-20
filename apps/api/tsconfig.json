@@ -2,8 +2,7 @@
   "extends": "@medschedule/tsconfig/nestjs.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "src",
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
-  "include": ["src"]
+  "include": ["src", "test"]
 }
