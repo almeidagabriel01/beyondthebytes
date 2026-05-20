@@ -36,3 +36,9 @@ test-results/
 
 # Prisma
 prisma/generated/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Challenge / sensitive documents
+*.pdf
