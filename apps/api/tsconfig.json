@@ -1,0 +1,10 @@
+{
+  "extends": "@medschedule/tsconfig/nestjs.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@medschedule/shared": ["../../packages/shared/src/index.ts"]
+    }
+  },
+  "include": ["src", "test", "prisma"]
+}
