@@ -49,3 +49,6 @@ CLAUDE.md
 
 # Documentation folder — not tracked in repo
 docs/
+
+# Playwright auth files
+apps/web/playwright/.auth/*.json
