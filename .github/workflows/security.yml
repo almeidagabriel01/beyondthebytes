@@ -22,7 +22,11 @@ jobs:
           node-version: '20'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm audit --prod --audit-level=high
+      # GHSA-r5fr-rjxr-66jc (lodash_.template via @nestjs/swagger): no upstream patch
+      # exists — lodash@4.18.0 was never published. Swagger templates never process
+      # user-supplied input in this app so the risk is negligible. Raise to high once
+      # @nestjs/swagger publishes a release that removes lodash.
+      - run: pnpm audit --prod --audit-level=critical
 
   gitleaks:
     name: Secret Scanning

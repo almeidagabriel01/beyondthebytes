@@ -32,6 +32,12 @@
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "minimatch": ">=10.2.3",
+      "multer": ">=2.1.1"
+    }
+  },
   "lint-staged": {
     "*.{ts,tsx,mjs,cjs,js}": [
       "eslint --fix --max-warnings 0"
