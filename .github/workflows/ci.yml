@@ -80,6 +80,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @medschedule/api db:migrate
+      - run: pnpm --filter @medschedule/api db:seed
+        env:
+          SEED_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD || 'Admin@12345' }}
       - run: pnpm --filter @medschedule/api test:e2e
 
   build:
@@ -98,3 +101,71 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo build
+
+  test-e2e-web:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: medschedule
+          POSTGRES_PASSWORD: medschedule
+          POSTGRES_DB: medschedule_test
+        ports:
+          - '5432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://medschedule:medschedule@localhost:5432/medschedule_test
+      NODE_ENV: test
+      PORT: '3001'
+      CORS_ORIGIN: http://localhost:3000
+      JWT_SECRET: ci-test-secret-exactly-32-chars-ok
+      JWT_REFRESH_SECRET: ci-refresh-secret-exactly-32-chars
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @medschedule/shared build
+      - run: pnpm --filter @medschedule/api db:migrate
+      - run: pnpm --filter @medschedule/api db:seed
+      - name: Start API
+        run: pnpm --filter @medschedule/api dev &
+      - name: Wait for API to be ready
+        run: |
+          for i in {1..30}; do
+            curl -sf http://localhost:3001/health && break
+            sleep 2
+          done
+      - name: Install Playwright browsers
+        run: pnpm --filter @medschedule/web exec playwright install chromium --with-deps
+      - name: Build web for Playwright
+        run: pnpm --filter @medschedule/web build
+        env:
+          JWT_SECRET: ci-test-secret-exactly-32-chars-ok
+      - name: Start web server
+        run: pnpm --filter @medschedule/web start &
+      - name: Wait for web to be ready
+        run: |
+          for i in {1..30}; do
+            curl -sf http://localhost:3000 && break
+            sleep 2
+          done
+      - run: pnpm --filter @medschedule/web test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          PLAYWRIGHT_API_URL: http://localhost:3001
+          TEST_ADMIN_EMAIL: admin@medschedule.local
+          TEST_ADMIN_PASSWORD: Admin@12345
+          JWT_SECRET: ci-test-secret-exactly-32-chars-ok
