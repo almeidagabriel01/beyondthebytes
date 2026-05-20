@@ -1,12 +1,17 @@
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import tseslint from 'typescript-eslint';
-import baseConfig from '@medschedule/eslint-config/base';
 
-export default tseslint.config(...baseConfig, {
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+export default tseslint.config({
+  files: ['src/**/*.ts', 'test/**/*.ts'],
+  extends: tseslint.configs.recommended,
   languageOptions: {
     parserOptions: {
-      project: true,
-      tsconfigRootDir: import.meta.dirname,
+      project: resolve(__dirname, 'tsconfig.json'),
+      tsconfigRootDir: __dirname,
     },
   },
-  ignores: ['dist/', 'coverage/', 'node_modules/', 'prisma/generated/'],
+  ignores: ['dist/', 'coverage/', 'node_modules/'],
 });
