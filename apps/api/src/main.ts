@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { env } from './config/env';
 
@@ -12,6 +13,7 @@ async function bootstrap(): Promise<void> {
 
   app.useLogger(app.get(Logger));
   app.use(helmet());
+  app.use(cookieParser()); // REQUIRED: enables req.cookies for JwtStrategy extractor
   app.enableCors({
     origin: CORS_ORIGIN.split(',').map((o) => o.trim()),
     credentials: true,
@@ -21,9 +23,9 @@ async function bootstrap(): Promise<void> {
   if (NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('MedSchedule API')
-      .setDescription('Medical scheduling system — Phase 0 baseline')
-      .setVersion('0.0.1')
-      .addBearerAuth()
+      .setDescription('Medical scheduling system')
+      .setVersion('0.2.0')
+      .addCookieAuth('access_token')
       .build();
     SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
   }

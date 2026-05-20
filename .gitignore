@@ -42,3 +42,7 @@ prisma/generated/
 
 # Challenge / sensitive documents
 *.pdf
+
+# Claude Code — never commit
+CLAUDE.md
+.claude/
