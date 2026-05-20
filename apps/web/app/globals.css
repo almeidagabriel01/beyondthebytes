@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* MedSchedule design tokens — source: Google Stitch project 3348431107688966617
    See docs/DESIGN-SYSTEM.md for full token reference.
@@ -7,8 +7,8 @@
 @layer base {
   :root {
     /* ── Core surfaces ─────────────────────────────────────────── */
-    --background: 270 100% 99%;        /* #fcf8ff — lavender-tinted white */
-    --foreground: 240 13% 12%;         /* #1b1b23 — near-black text */
+    --background: 270 100% 99%; /* #fcf8ff — lavender-tinted white */
+    --foreground: 240 13% 12%; /* #1b1b23 — near-black text */
 
     --card: 0 0% 100%;
     --card-foreground: 240 13% 12%;
@@ -21,50 +21,50 @@
     --primary-foreground: 0 0% 100%;
 
     /* ── Secondary / muted surfaces ─────────────────────────────── */
-    --secondary: 252 25% 95%;          /* #efecf8 — surface-container */
+    --secondary: 252 25% 95%; /* #efecf8 — surface-container */
     --secondary-foreground: 240 13% 12%;
 
     --muted: 252 25% 95%;
-    --muted-foreground: 244 9% 30%;    /* #464554 — on-surface-variant */
+    --muted-foreground: 244 9% 30%; /* #464554 — on-surface-variant */
 
-    --accent: 258 22% 92%;             /* #e9e6f3 — surface-container-high */
+    --accent: 258 22% 92%; /* #e9e6f3 — surface-container-high */
     --accent-foreground: 240 13% 12%;
 
     /* ── Destructive / error ────────────────────────────────────── */
-    --destructive: 0 75% 41%;          /* #ba1a1a */
+    --destructive: 0 75% 41%; /* #ba1a1a */
     --destructive-foreground: 0 0% 100%;
 
     /* ── Borders and inputs ─────────────────────────────────────── */
-    --border: 258 17% 90%;             /* #e4e1ed — outline-variant */
+    --border: 258 17% 90%; /* #e4e1ed — outline-variant */
     --input: 258 17% 90%;
-    --ring: 239 63% 55%;               /* primary for focus rings */
+    --ring: 239 63% 55%; /* primary for focus rings */
 
     /* ── Radius scale ───────────────────────────────────────────── */
-    --radius: 0.5rem;                  /* 8px — standard (rounded-lg) */
+    --radius: 0.5rem; /* 8px — standard (rounded-lg) */
 
     /* ── Sidebar (always dark — not toggled by color scheme) ────── */
-    --sidebar-background: 222 47% 11%;   /* #0F172A — slate-900 */
-    --sidebar-foreground: 215 19% 84%;   /* #cbd5e1 — slate-300 */
+    --sidebar-background: 222 47% 11%; /* #0F172A — slate-900 */
+    --sidebar-foreground: 215 19% 84%; /* #cbd5e1 — slate-300 */
     --sidebar-primary: 239 63% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;       /* #1e293b — slate-800 hover */
+    --sidebar-accent: 217 33% 17%; /* #1e293b — slate-800 hover */
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 222 39% 16%;
     --sidebar-ring: 239 63% 55%;
 
     /* ── Appointment status badge colors ────────────────────────── */
-    --status-scheduled-bg: 24 100% 88%;      /* #ffdcc5 — agendado */
-    --status-scheduled-text: 30 100% 22%;    /* #703700 */
-    --status-confirmed-bg: 244 100% 94%;     /* #e1e0ff — confirmado */
-    --status-confirmed-text: 243 60% 46%;    /* #2f2ebe */
-    --status-waiting-bg: 244 100% 94%;       /* same as confirmed */
+    --status-scheduled-bg: 24 100% 88%; /* #ffdcc5 — agendado */
+    --status-scheduled-text: 30 100% 22%; /* #703700 */
+    --status-confirmed-bg: 244 100% 94%; /* #e1e0ff — confirmado */
+    --status-confirmed-text: 243 60% 46%; /* #2f2ebe */
+    --status-waiting-bg: 244 100% 94%; /* same as confirmed */
     --status-waiting-text: 243 60% 46%;
-    --status-in-progress-bg: 239 63% 55%;    /* primary */
+    --status-in-progress-bg: 239 63% 55%; /* primary */
     --status-in-progress-text: 0 0% 100%;
-    --status-done-bg: 252 25% 95%;           /* #efecf8 */
-    --status-done-text: 244 9% 30%;          /* #464554 */
-    --status-cancelled-bg: 0 73% 94%;        /* #ffdad6 — error-container */
-    --status-cancelled-text: 0 100% 28%;     /* #93000a */
+    --status-done-bg: 252 25% 95%; /* #efecf8 */
+    --status-done-text: 244 9% 30%; /* #464554 */
+    --status-cancelled-bg: 0 73% 94%; /* #ffdad6 — error-container */
+    --status-cancelled-text: 0 100% 28%; /* #93000a */
 
     /* ── Custom shadows (use as Tailwind shadow utilities) ──────── */
     --shadow-card: 0 4px 12px rgba(15, 23, 42, 0.05);
@@ -121,10 +121,10 @@
   --color-status-in-progress-text: hsl(var(--status-in-progress-text));
 
   /* Radius */
-  --radius-sm: calc(var(--radius) - 4px);   /* 4px */
-  --radius-md: var(--radius);               /* 8px */
-  --radius-lg: calc(var(--radius) + 4px);   /* 12px */
-  --radius-xl: calc(var(--radius) + 8px);   /* 16px */
+  --radius-sm: calc(var(--radius) - 4px); /* 4px */
+  --radius-md: var(--radius); /* 8px */
+  --radius-lg: calc(var(--radius) + 4px); /* 12px */
+  --radius-xl: calc(var(--radius) + 8px); /* 16px */
 
   /* Typography */
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -140,9 +140,18 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-sans);
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  [role='button'],
+  a,
+  label[for] {
+    cursor: pointer;
   }
 
   /* Focus ring — consistent across all interactives */
