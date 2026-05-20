@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { format, addDays, subDays } from 'date-fns';
+import { format, addDays, subDays, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AgendaDay } from '@/components/agenda/agenda-day';
 import { NewAppointmentModal } from '@/components/appointments/new-appointment-modal';
@@ -16,8 +16,17 @@ export function AgendaClient() {
 
   const isoDate = format(date, 'yyyy-MM-dd');
 
-  const dateLabel = format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
-  const dateLabelCapitalized = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
+  function formatAgendaDate(d: Date): string {
+    const day = format(d, 'd', { locale: ptBR });
+    const month = format(d, 'MMM', { locale: ptBR });
+    const monthCap = month.charAt(0).toUpperCase() + month.slice(1).replace('.', '');
+    if (isToday(d)) return `Hoje, ${day} ${monthCap}`;
+    const weekday = format(d, 'EEE', { locale: ptBR }).replace('.', '');
+    const weekdayCap = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+    return `${weekdayCap}, ${day} ${monthCap}`;
+  }
+
+  const dateLabel = formatAgendaDate(date);
 
   return (
     <>
@@ -34,8 +43,8 @@ export function AgendaClient() {
               <span className="material-symbols-outlined text-xl leading-none">chevron_left</span>
             </button>
 
-            <h2 className="text-base font-semibold text-[#1b1b23] min-w-[240px] text-center">
-              {dateLabelCapitalized}
+            <h2 className="text-base font-semibold text-[#1b1b23] min-w-[200px] text-center">
+              {dateLabel}
             </h2>
 
             <button
