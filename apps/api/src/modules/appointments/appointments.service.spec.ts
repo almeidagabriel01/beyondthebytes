@@ -1,0 +1,273 @@
+import { Test, type TestingModule } from '@nestjs/testing';
+import { ConflictException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { AppointmentsService } from './appointments.service';
+import { PrismaService } from '../../prisma/prisma.service';
+
+// ── Fixtures ──────────────────────────────────────────────────────────────────
+
+const FUTURE_VALID_SLOT = '2099-06-15T09:00:00-03:00'; // 09:00 BRT, minute=0 ✓
+const INVALID_SLOT = '2099-06-15T09:15:00-03:00'; // minute=15, fails isValidSlot
+const PAST_VALID_SLOT = '2020-06-15T09:00:00-03:00'; // valid alignment, past date
+
+const dbPatient = {
+  id: 'pat-1',
+  fullName: 'Maria Souza',
+  cpf: '52998224725',
+  phone: '(11) 91234-5678',
+};
+
+const dbAppointment = {
+  id: 'appt-1',
+  patientId: 'pat-1',
+  userId: 'user-1',
+  startsAt: new Date(FUTURE_VALID_SLOT),
+  endsAt: new Date('2099-06-15T09:30:00-03:00'),
+  durationMinutes: 30,
+  type: 'CONSULTA',
+  insurance: 'PARTICULAR',
+  value: null,
+  observations: null,
+  status: 'AGENDADO',
+  createdById: 'user-1',
+  createdAt: new Date('2026-01-01T10:00:00Z'),
+  updatedAt: new Date('2026-01-01T10:00:00Z'),
+  cancelledAt: null,
+  cancelReason: null,
+  patient: dbPatient,
+};
+
+// ── Mock Prisma ───────────────────────────────────────────────────────────────
+
+const mockPrisma = {
+  appointment: {
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+  },
+  patient: {
+    findFirst: jest.fn(),
+  },
+  appointmentEvent: {
+    create: jest.fn(),
+  },
+  $queryRaw: jest.fn(),
+  $transaction: jest.fn((arg: unknown): Promise<unknown> => {
+    if (typeof arg === 'function') {
+      // Interactive transaction: call the function with mock as tx
+      return (arg as (tx: unknown) => Promise<unknown>)(mockPrisma);
+    }
+    // Array-style transaction
+    return Promise.all(arg as Promise<unknown>[]);
+  }),
+};
+
+// ── Test Suite ────────────────────────────────────────────────────────────────
+
+describe('AppointmentsService', () => {
+  let service: AppointmentsService;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [AppointmentsService, { provide: PrismaService, useValue: mockPrisma }],
+    }).compile();
+
+    service = module.get<AppointmentsService>(AppointmentsService);
+  });
+
+  // ── create ─────────────────────────────────────────────────────────────────
+
+  describe('create', () => {
+    const baseDto = {
+      patientId: 'pat-1',
+      startsAt: FUTURE_VALID_SLOT,
+      durationMinutes: 30 as const,
+      type: 'CONSULTA' as const,
+      insurance: 'PARTICULAR',
+    };
+
+    it('throws UnprocessableEntityException for an invalid slot (09:15)', async () => {
+      await expect(
+        service.create({ ...baseDto, startsAt: INVALID_SLOT }, 'user-1'),
+      ).rejects.toThrow(UnprocessableEntityException);
+    });
+
+    it('throws UnprocessableEntityException for a past slot (2020)', async () => {
+      await expect(
+        service.create({ ...baseDto, startsAt: PAST_VALID_SLOT }, 'user-1'),
+      ).rejects.toThrow(UnprocessableEntityException);
+    });
+
+    it('throws NotFoundException when patient does not exist', async () => {
+      mockPrisma.patient.findFirst.mockResolvedValue(null);
+
+      await expect(service.create(baseDto, 'user-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ConflictException on exclusion constraint violation (P2010 + no_overlap)', async () => {
+      mockPrisma.patient.findFirst.mockResolvedValue(dbPatient);
+      mockPrisma.appointment.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Exclusion constraint violated', {
+          code: 'P2010',
+          clientVersion: '6.0.0',
+          meta: {
+            message: 'conflicting key value violates exclusion constraint "no_overlap_per_user"',
+          },
+        }),
+      );
+      mockPrisma.appointmentEvent.create.mockResolvedValue({});
+
+      await expect(service.create(baseDto, 'user-1')).rejects.toThrow(ConflictException);
+    });
+
+    it('returns AppointmentResponse with status AGENDADO on happy path', async () => {
+      mockPrisma.patient.findFirst.mockResolvedValue(dbPatient);
+      mockPrisma.appointment.create.mockResolvedValue(dbAppointment);
+      mockPrisma.appointmentEvent.create.mockResolvedValue({});
+
+      const result = await service.create(baseDto, 'user-1');
+
+      expect(result).toMatchObject({
+        id: 'appt-1',
+        status: 'AGENDADO',
+        patientId: 'pat-1',
+        patient: expect.objectContaining({ fullName: 'Maria Souza' }),
+      });
+      expect(typeof result.startsAt).toBe('string');
+    });
+  });
+
+  // ── cancel ─────────────────────────────────────────────────────────────────
+
+  describe('cancel', () => {
+    const cancelDto = { reason: 'Paciente solicitou cancelamento' };
+
+    it('throws NotFoundException when appointment does not exist', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue(null);
+
+      await expect(service.cancel('appt-99', cancelDto, 'user-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws UnprocessableEntityException (TERMINAL_STATUS) when already CANCELADO', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue({
+        ...dbAppointment,
+        status: 'CANCELADO',
+      });
+
+      const err = await service.cancel('appt-1', cancelDto, 'user-1').catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(UnprocessableEntityException);
+      expect((err as UnprocessableEntityException).getResponse()).toMatchObject({
+        code: 'TERMINAL_STATUS',
+      });
+    });
+
+    it('throws UnprocessableEntityException (TERMINAL_STATUS) when already REALIZADO', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue({
+        ...dbAppointment,
+        status: 'REALIZADO',
+      });
+
+      const err = await service.cancel('appt-1', cancelDto, 'user-1').catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(UnprocessableEntityException);
+      expect((err as UnprocessableEntityException).getResponse()).toMatchObject({
+        code: 'TERMINAL_STATUS',
+      });
+    });
+
+    it('returns AppointmentResponse with status CANCELADO and cancelReason on happy path', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue(dbAppointment);
+      const cancelledAppt = {
+        ...dbAppointment,
+        status: 'CANCELADO',
+        cancelledAt: new Date(),
+        cancelReason: cancelDto.reason,
+      };
+      mockPrisma.appointment.update.mockResolvedValue(cancelledAppt);
+      mockPrisma.appointmentEvent.create.mockResolvedValue({});
+
+      const result = await service.cancel('appt-1', cancelDto, 'user-1');
+
+      expect(result.status).toBe('CANCELADO');
+      expect(result.cancelReason).toBe(cancelDto.reason);
+    });
+  });
+
+  // ── update ─────────────────────────────────────────────────────────────────
+
+  describe('update', () => {
+    it('throws UnprocessableEntityException (TERMINAL_STATUS) when appointment is CANCELADO', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue({
+        ...dbAppointment,
+        status: 'CANCELADO',
+      });
+
+      const err = await service
+        .update('appt-1', { insurance: 'UNIMED' }, 'user-1')
+        .catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(UnprocessableEntityException);
+      expect((err as UnprocessableEntityException).getResponse()).toMatchObject({
+        code: 'TERMINAL_STATUS',
+      });
+    });
+
+    it('returns updated AppointmentResponse on happy path', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue(dbAppointment);
+      const updatedAppt = { ...dbAppointment, insurance: 'UNIMED' };
+      mockPrisma.appointment.update.mockResolvedValue(updatedAppt);
+      mockPrisma.appointmentEvent.create.mockResolvedValue({});
+
+      const result = await service.update('appt-1', { insurance: 'UNIMED' }, 'user-1');
+
+      expect(result.insurance).toBe('UNIMED');
+      expect(result.id).toBe('appt-1');
+    });
+  });
+
+  // ── findOne ────────────────────────────────────────────────────────────────
+
+  describe('findOne', () => {
+    it('throws NotFoundException when appointment does not exist', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue(null);
+
+      await expect(service.findOne('appt-99', 'user-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('returns AppointmentResponse on happy path', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue(dbAppointment);
+
+      const result = await service.findOne('appt-1', 'user-1');
+
+      expect(result).toMatchObject({
+        id: 'appt-1',
+        status: 'AGENDADO',
+        patient: expect.objectContaining({ id: 'pat-1' }),
+      });
+    });
+  });
+
+  // ── getMonthSummary ────────────────────────────────────────────────────────
+
+  describe('getMonthSummary', () => {
+    it('groups rows by date and converts BigInt count to Number', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([
+        { date: '2026-05-20', status: 'AGENDADO', count: BigInt(3) },
+        { date: '2026-05-20', status: 'CANCELADO', count: BigInt(1) },
+        { date: '2026-05-21', status: 'AGENDADO', count: BigInt(2) },
+      ]);
+
+      const result = await service.getMonthSummary('2026-05-01', '2026-05-31', 'user-1');
+
+      expect(result).toEqual([
+        { date: '2026-05-20', counts: { AGENDADO: 3, CANCELADO: 1 } },
+        { date: '2026-05-21', counts: { AGENDADO: 2 } },
+      ]);
+      // Ensure counts are plain numbers, not BigInt
+      expect(typeof result[0]!.counts['AGENDADO']).toBe('number');
+    });
+  });
+});
