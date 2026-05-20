@@ -18,6 +18,7 @@ export default function NotFound() {
             width={320}
             height={320}
             className="w-full h-full object-cover mix-blend-multiply"
+            unoptimized
           />
         </div>
 
