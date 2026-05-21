@@ -1,7 +1,10 @@
 import type {
   CreateAppointment,
+  UpdateAppointment,
   CancelAppointment,
   AppointmentResponse,
+  AppointmentEventResponse,
+  AppointmentStatus,
   MonthSummaryItem,
 } from '@medschedule/shared';
 import { clientEnv } from '@/lib/env';
@@ -67,6 +70,29 @@ export async function createAppointment(dto: CreateAppointment): Promise<Appoint
   return handleResponse<AppointmentResponse>(res);
 }
 
+export async function updateAppointment(
+  id: string,
+  dto: UpdateAppointment,
+): Promise<AppointmentResponse> {
+  const res = await fetch(`${BASE}/appointments/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(dto),
+  });
+  return handleResponse<AppointmentResponse>(res);
+}
+
+export async function fetchAppointment(id: string): Promise<AppointmentResponse> {
+  const res = await fetch(`${BASE}/appointments/${id}`, { credentials: 'include' });
+  return handleResponse<AppointmentResponse>(res);
+}
+
+export async function fetchAppointmentEvents(id: string): Promise<AppointmentEventResponse[]> {
+  const res = await fetch(`${BASE}/appointments/${id}/events`, { credentials: 'include' });
+  return handleResponse<AppointmentEventResponse[]>(res);
+}
+
 export async function cancelAppointment(
   id: string,
   dto: CancelAppointment,
@@ -78,4 +104,18 @@ export async function cancelAppointment(
     body: JSON.stringify(dto),
   });
   return handleResponse<AppointmentResponse>(res);
+}
+
+export async function transitionAppointment(
+  id: string,
+  to: AppointmentStatus,
+  reason?: string,
+): Promise<{ status: AppointmentStatus }> {
+  const res = await fetch(`${BASE}/appointments/${id}/transition`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ to, reason }),
+  });
+  return handleResponse<{ status: AppointmentStatus }>(res);
 }

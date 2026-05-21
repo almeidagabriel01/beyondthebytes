@@ -59,6 +59,7 @@ export function AgendaDay({ isoDate, onCancelAppointment }: AgendaDayProps) {
         icon="light_mode"
         iconColor="text-[#4648d4]"
         appointments={manha}
+        isoDate={isoDate}
         onCancelAppointment={onCancelAppointment}
       />
       <AgendaSection
@@ -66,6 +67,7 @@ export function AgendaDay({ isoDate, onCancelAppointment }: AgendaDayProps) {
         icon="routine"
         iconColor="text-[#b55d00]"
         appointments={tarde}
+        isoDate={isoDate}
         onCancelAppointment={onCancelAppointment}
       />
       <AgendaSection
@@ -73,6 +75,7 @@ export function AgendaDay({ isoDate, onCancelAppointment }: AgendaDayProps) {
         icon="dark_mode"
         iconColor="text-[#3323cc]"
         appointments={noite}
+        isoDate={isoDate}
         onCancelAppointment={onCancelAppointment}
       />
     </div>

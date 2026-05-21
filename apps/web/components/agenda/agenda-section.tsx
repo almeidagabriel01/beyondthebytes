@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { AppointmentCard } from '@/components/appointments/appointment-card';
+import { QuickActionsMenu } from '@/components/appointments/quick-actions-menu';
 import type { AppointmentResponse } from '@medschedule/shared';
 
 interface AgendaSectionProps {
@@ -6,6 +8,7 @@ interface AgendaSectionProps {
   icon: string;
   iconColor: string;
   appointments: AppointmentResponse[];
+  isoDate: string;
   onCancelAppointment: (appt: AppointmentResponse) => void;
 }
 
@@ -14,6 +17,7 @@ export function AgendaSection({
   icon,
   iconColor,
   appointments,
+  isoDate,
   onCancelAppointment,
 }: AgendaSectionProps) {
   return (
@@ -42,14 +46,18 @@ export function AgendaSection({
           </div>
         ) : (
           appointments.map((appt) => (
-            <AppointmentCard
-              key={appt.id}
-              appointment={appt}
-              variant="agenda"
-              {...(appt.status !== 'CANCELADO' && appt.status !== 'REALIZADO'
-                ? { onClick: () => onCancelAppointment(appt) }
-                : {})}
-            />
+            <div key={appt.id} className="relative group">
+              <Link href={`/consultas/${appt.id}`} className="block">
+                <AppointmentCard appointment={appt} variant="agenda" />
+              </Link>
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <QuickActionsMenu
+                  appointment={appt}
+                  queryKey={['appointments-day', isoDate]}
+                  onCancelRequest={onCancelAppointment}
+                />
+              </div>
+            </div>
           ))
         )}
       </div>
