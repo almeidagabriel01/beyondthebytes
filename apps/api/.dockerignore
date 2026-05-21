@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+coverage
+.turbo
+**/*.log
+.DS_Store
+.next
+playwright-report
+test-results
