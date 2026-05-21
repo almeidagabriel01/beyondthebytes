@@ -1,22 +1,13 @@
-import Link from 'next/link';
-import { cookies } from 'next/headers';
+'use client';
+
+import { useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import type { AppointmentResponse } from '@medschedule/shared';
 import { StatusBadge } from '@/components/shared/status-badge';
-
-const API = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
-
-async function fetchTodayAppointments(cookieHeader: string): Promise<AppointmentResponse[]> {
-  const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(
-    new Date(),
-  );
-  const res = await fetch(`${API}/appointments?date=${date}`, {
-    headers: { Cookie: cookieHeader },
-    cache: 'no-store',
-  });
-  if (!res.ok) return [];
-  return res.json() as Promise<AppointmentResponse[]>;
-}
+import { AppointmentDetailDrawer } from '@/components/appointments/appointment-detail-drawer';
+import { fetchDayAppointments } from '@/lib/appointments';
 
 const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
   CONSULTA: 'Consulta',
@@ -25,14 +16,38 @@ const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
   PROCEDIMENTO: 'Procedimento',
 };
 
-export default async function ConsultasPage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map((c) => `${c.name}=${c.value}`)
-    .join('; ');
+function todayIsoBRT(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+}
 
-  const appointments = await fetchTodayAppointments(cookieHeader);
+function SkeletonRow() {
+  return <div className="h-20 bg-white rounded-xl border border-[#e2e8f0] animate-pulse" />;
+}
+
+export default function ConsultasPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedId = searchParams.get('id');
+  const date = todayIsoBRT();
+
+  const { data: appointments, status } = useQuery<AppointmentResponse[]>({
+    queryKey: ['appointments-day', date],
+    queryFn: () => fetchDayAppointments(date),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const openDrawer = useCallback(
+    (id: string) => {
+      router.replace(`/consultas?id=${id}`, { scroll: false });
+    },
+    [router],
+  );
+
+  const closeDrawer = useCallback(() => {
+    router.replace('/consultas', { scroll: false });
+  }, [router]);
+
+  const list = appointments ?? [];
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto">
@@ -40,20 +55,40 @@ export default async function ConsultasPage() {
         Consultas de Hoje
       </h1>
 
-      {appointments.length === 0 ? (
+      {status === 'pending' && (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonRow key={i} />
+          ))}
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] p-8 text-center">
+          <span className="material-symbols-outlined text-[40px] text-red-400 mb-3 block">
+            error
+          </span>
+          <p className="text-[14px] text-[#64748b]">Erro ao carregar consultas.</p>
+        </div>
+      )}
+
+      {status === 'success' && list.length === 0 && (
         <div className="bg-white rounded-xl border border-[#e2e8f0] p-12 text-center">
           <span className="material-symbols-outlined text-[48px] text-[#94a3b8] mb-3 block">
             event_available
           </span>
           <p className="text-[16px] text-[#64748b]">Nenhuma consulta agendada para hoje.</p>
         </div>
-      ) : (
+      )}
+
+      {status === 'success' && list.length > 0 && (
         <div className="space-y-3">
-          {appointments.map((appt) => (
-            <Link
+          {list.map((appt) => (
+            <button
               key={appt.id}
-              href={`/consultas/${appt.id}`}
-              className="block bg-white rounded-xl border border-[#e2e8f0] p-4 hover:shadow-md transition-shadow"
+              type="button"
+              onClick={() => openDrawer(appt.id)}
+              className="block w-full text-left bg-white rounded-xl border border-[#e2e8f0] p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 min-w-0">
@@ -81,10 +116,12 @@ export default async function ConsultasPage() {
                   </span>
                 </div>
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       )}
+
+      <AppointmentDetailDrawer appointmentId={selectedId} onClose={closeDrawer} />
     </div>
   );
 }

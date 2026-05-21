@@ -1,11 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PatientList } from '@/components/patients/patient-list';
 import { PatientFormModal } from '@/components/patients/patient-form-modal';
+import { PatientDetailDrawer } from '@/components/patients/patient-detail-drawer';
 
 export default function PacientesPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedId = searchParams.get('id');
   const [showCreate, setShowCreate] = useState(false);
+
+  const openDrawer = useCallback(
+    (id: string) => {
+      router.replace(`/pacientes?id=${id}`, { scroll: false });
+    },
+    [router],
+  );
+
+  const closeDrawer = useCallback(() => {
+    router.replace('/pacientes', { scroll: false });
+  }, [router]);
 
   return (
     <div className="flex flex-col h-full p-6 gap-4 max-w-4xl mx-auto w-full">
@@ -26,9 +42,11 @@ export default function PacientesPage() {
         </button>
       </div>
 
-      <PatientList />
+      <PatientList onSelect={openDrawer} />
 
       {showCreate && <PatientFormModal mode="create" onClose={() => setShowCreate(false)} />}
+
+      <PatientDetailDrawer patientId={selectedId} onClose={closeDrawer} />
     </div>
   );
 }

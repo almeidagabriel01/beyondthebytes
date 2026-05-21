@@ -31,7 +31,7 @@ export function NextAppointmentsPanel({ items }: Props) {
           {items.map((appt) => (
             <li key={appt.id}>
               <Link
-                href={`/consultas/${appt.id}`}
+                href={`/consultas?id=${appt.id}`}
                 className="flex items-center gap-4 px-5 py-3 hover:bg-[#f8fafc] transition-colors"
               >
                 <span className="text-[13px] font-semibold tabular-nums text-[#0f172a] w-14">
