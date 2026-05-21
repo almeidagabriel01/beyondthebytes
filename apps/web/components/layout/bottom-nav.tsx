@@ -16,7 +16,7 @@ export function BottomNav() {
   const pathname = usePathname();
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#e2e8f0] flex items-stretch shadow-[0_-4px_12px_rgba(15,23,42,0.04)]"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#e2e8f0] flex items-stretch shadow-[0_-4px_12px_rgba(15,23,42,0.04)] pb-[env(safe-area-inset-bottom)]"
       aria-label="Navegação principal"
     >
       {items.map(({ href, label, icon }) => {

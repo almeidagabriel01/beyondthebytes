@@ -401,7 +401,10 @@ async function main(): Promise<void> {
   const password = process.env['SEED_ADMIN_PASSWORD'] ?? 'Admin@12345';
   const passwordHash = await argon2.hash(password);
 
-  const adminAvatarUrl = 'https://i.pravatar.cc/150?u=admin@medschedule.local';
+  // ui-avatars.com is more reliable than pravatar.cc on restricted networks
+  // and generates a deterministic initials-based avatar.
+  const adminAvatarUrl =
+    'https://ui-avatars.com/api/?name=Administrador&background=4648d4&color=fff&size=150&bold=true';
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@medschedule.local' },

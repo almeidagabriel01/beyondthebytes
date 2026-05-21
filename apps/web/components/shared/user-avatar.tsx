@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { cn, getInitials } from '@/lib/utils';
 
 interface UserAvatarProps {
@@ -17,7 +20,9 @@ const SIZE = {
 
 export function UserAvatar({ name, avatarUrl, size = 'md', className }: UserAvatarProps) {
   const cfg = SIZE[size];
-  if (avatarUrl) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (avatarUrl && !imgFailed) {
     // Plain <img> by design — external avatar providers (e.g. pravatar.cc)
     // are intentionally not added to next.config.js remotePatterns, so
     // next/image would refuse to render them.
@@ -25,7 +30,12 @@ export function UserAvatar({ name, avatarUrl, size = 'md', className }: UserAvat
       <img
         src={avatarUrl}
         alt={name ?? 'Avatar'}
-        className={cn(cfg.box, 'rounded-full object-cover border border-[#e2e8f0]', className)}
+        onError={() => setImgFailed(true)}
+        className={cn(
+          cfg.box,
+          'rounded-full object-cover border border-[#e2e8f0] shrink-0',
+          className,
+        )}
       />
     );
   }

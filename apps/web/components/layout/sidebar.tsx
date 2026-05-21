@@ -165,11 +165,13 @@ export default function Sidebar() {
           <span className="hidden lg:block flex-1 truncate text-left">
             {me?.name || me?.email || '...'}
           </span>
-          <span
-            className="hidden lg:inline material-symbols-outlined text-sm leading-none"
-            aria-hidden="true"
-          >
-            unfold_more
+          {/* Wrapper carries `hidden` because the Material Symbols global class
+              sets display:inline-block, overriding Tailwind's `hidden` if applied
+              directly to the icon span. */}
+          <span className="hidden lg:inline-flex shrink-0">
+            <span className="material-symbols-outlined text-sm leading-none" aria-hidden="true">
+              unfold_more
+            </span>
           </span>
         </button>
       </div>
