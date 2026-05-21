@@ -30,7 +30,7 @@ const TYPE_OPTIONS = [
 interface EditAppointmentModalProps {
   appointment: AppointmentResponse;
   onClose: () => void;
-  onSaved: (updated: AppointmentResponse) => void;
+  onSaved: () => void;
 }
 
 export function EditAppointmentModal({ appointment, onClose, onSaved }: EditAppointmentModalProps) {
@@ -53,13 +53,13 @@ export function EditAppointmentModal({ appointment, onClose, onSaved }: EditAppo
   async function onSubmit(data: EditForm) {
     setServerError(null);
     try {
-      const updated = await updateAppointment(appointment.id, {
+      await updateAppointment(appointment.id, {
         type: data.type,
         insurance: data.insurance,
         value: data.value ? Number(data.value) : undefined,
         observations: data.observations || undefined,
       });
-      onSaved(updated);
+      onSaved();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao salvar. Tente novamente.';
       setServerError(msg);

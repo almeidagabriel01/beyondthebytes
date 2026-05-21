@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AppointmentCard } from '@/components/appointments/appointment-card';
+import { QuickActionsMenu } from '@/components/appointments/quick-actions-menu';
 import { fetchDayAppointments } from '@/lib/appointments';
 import { groupByPeriod } from '@/lib/group-by-period';
 import type { AppointmentResponse } from '@medschedule/shared';
@@ -139,14 +141,18 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
                   </h5>
                   <div className="flex flex-col gap-3">
                     {manha.map((appt) => (
-                      <AppointmentCard
-                        key={appt.id}
-                        appointment={appt}
-                        variant="calendar"
-                        {...(appt.status !== 'CANCELADO' && appt.status !== 'REALIZADO'
-                          ? { onClick: () => onCancelAppointment(appt) }
-                          : {})}
-                      />
+                      <div key={appt.id} className="relative group">
+                        <Link href={`/consultas/${appt.id}`} className="block">
+                          <AppointmentCard appointment={appt} variant="calendar" />
+                        </Link>
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <QuickActionsMenu
+                            appointment={appt}
+                            queryKey={['appointments-day', isoDate]}
+                            onCancelRequest={onCancelAppointment}
+                          />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </section>
@@ -165,14 +171,18 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
                   </h5>
                   <div className="flex flex-col gap-3">
                     {tarde.map((appt) => (
-                      <AppointmentCard
-                        key={appt.id}
-                        appointment={appt}
-                        variant="calendar"
-                        {...(appt.status !== 'CANCELADO' && appt.status !== 'REALIZADO'
-                          ? { onClick: () => onCancelAppointment(appt) }
-                          : {})}
-                      />
+                      <div key={appt.id} className="relative group">
+                        <Link href={`/consultas/${appt.id}`} className="block">
+                          <AppointmentCard appointment={appt} variant="calendar" />
+                        </Link>
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <QuickActionsMenu
+                            appointment={appt}
+                            queryKey={['appointments-day', isoDate]}
+                            onCancelRequest={onCancelAppointment}
+                          />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </section>

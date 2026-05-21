@@ -47,12 +47,10 @@ interface AppointmentDetailClientProps {
 }
 
 export function AppointmentDetailClient({
-  appointment: initialAppt,
-  events: initialEvents,
+  appointment: appt,
+  events,
 }: AppointmentDetailClientProps) {
   const router = useRouter();
-  const [appt, setAppt] = useState(initialAppt);
-  const [events, setEvents] = useState(initialEvents);
   const [transitioning, setTransitioning] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -215,9 +213,9 @@ export function AppointmentDetailClient({
         <EditAppointmentModal
           appointment={appt}
           onClose={() => setShowEdit(false)}
-          onSaved={(updated) => {
-            setAppt(updated);
+          onSaved={() => {
             setShowEdit(false);
+            router.refresh();
           }}
         />
       )}
