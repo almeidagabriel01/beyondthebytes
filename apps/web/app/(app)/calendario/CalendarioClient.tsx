@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -9,6 +9,7 @@ import { DayPanel } from '@/components/calendar/day-panel';
 import { NewAppointmentModal } from '@/components/appointments/new-appointment-modal';
 import { CancelAppointmentModal } from '@/components/appointments/cancel-appointment-modal';
 import { fetchMonthSummary } from '@/lib/appointments';
+import { useTopBarSlot } from '@/context/topbar-slot';
 import type { MonthSummaryItem, AppointmentResponse } from '@medschedule/shared';
 
 interface CalendarioClientProps {
@@ -21,6 +22,13 @@ export function CalendarioClient({ initialSummary }: CalendarioClientProps) {
   const [selectedDay, setSelectedDay] = useState<Date>(today);
   const [showNewModal, setShowNewModal] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<AppointmentResponse | null>(null);
+  const { setOnNewAppointment } = useTopBarSlot();
+
+  useEffect(() => {
+    setOnNewAppointment(() => setShowNewModal(true));
+    return () => setOnNewAppointment(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth() + 1;
@@ -77,7 +85,7 @@ export function CalendarioClient({ initialSummary }: CalendarioClientProps) {
             </div>
           </div>
 
-          {/* Right: view toggle + new button */}
+          {/* Right: view toggle */}
           <div className="flex items-center gap-3">
             <div className="flex bg-[#f8fafc] rounded-lg border border-[#cbd5e1] p-1">
               <span className="px-4 py-1.5 text-[12px] font-semibold bg-white border border-[#cbd5e1] shadow-sm rounded-md text-[#0f172a]">
@@ -90,16 +98,6 @@ export function CalendarioClient({ initialSummary }: CalendarioClientProps) {
                 Dia
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowNewModal(true)}
-              className="hidden md:flex items-center gap-2 rounded-lg bg-[#4648d4] px-4 py-2 text-[12px] font-semibold tracking-[0.05em] uppercase text-white hover:bg-[#3537b3] transition-colors shadow-sm"
-            >
-              <span className="material-symbols-outlined text-base leading-none" aria-hidden="true">
-                add
-              </span>
-              Novo agendamento
-            </button>
           </div>
         </div>
 
