@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EnvService } from '../../config/env.service';
 
 // Mock argon2 at module level — never call real crypto in unit tests
 jest.mock('argon2');
@@ -27,6 +28,13 @@ const mockJwtService = {
   decode: jest.fn(),
 };
 
+const mockEnvService = {
+  env: {
+    JWT_SECRET: 'test-jwt-secret-minimum-32-characters-ok',
+    JWT_REFRESH_SECRET: 'test-jwt-refresh-secret-32-chars-okay',
+  },
+} as EnvService;
+
 describe('AuthService', () => {
   let service: AuthService;
 
@@ -38,6 +46,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: EnvService, useValue: mockEnvService },
       ],
     }).compile();
 

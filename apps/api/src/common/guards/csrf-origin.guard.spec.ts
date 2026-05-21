@@ -1,9 +1,6 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { CsrfOriginGuard } from './csrf-origin.guard';
-
-jest.mock('../../config/env', () => ({
-  env: () => ({ CORS_ORIGIN: 'http://localhost:3000,https://app.example.com' }),
-}));
+import type { EnvService } from '../../config/env.service';
 
 function ctx(method: string, headers: Record<string, string> = {}): ExecutionContext {
   return {
@@ -11,8 +8,12 @@ function ctx(method: string, headers: Record<string, string> = {}): ExecutionCon
   } as unknown as ExecutionContext;
 }
 
+const mockEnv = {
+  env: { CORS_ORIGIN: 'http://localhost:3000,https://app.example.com' },
+} as EnvService;
+
 describe('CsrfOriginGuard', () => {
-  const guard = new CsrfOriginGuard();
+  const guard = new CsrfOriginGuard(mockEnv);
 
   it('allows GET regardless of origin', () => {
     expect(guard.canActivate(ctx('GET', { origin: 'https://evil.com' }))).toBe(true);

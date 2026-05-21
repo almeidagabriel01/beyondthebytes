@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import type { Request } from 'express';
-import { env } from '../../config/env';
+import { EnvService } from '../../config/env.service';
 
 const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -14,6 +14,8 @@ const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
  */
 @Injectable()
 export class CsrfOriginGuard implements CanActivate {
+  constructor(private readonly envService: EnvService) {}
+
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest<Request>();
 
@@ -26,8 +28,7 @@ export class CsrfOriginGuard implements CanActivate {
       return true;
     }
 
-    const allowed = env()
-      .CORS_ORIGIN.split(',')
+    const allowed = this.envService.env.CORS_ORIGIN.split(',')
       .map((o) => o.trim())
       .filter(Boolean);
 

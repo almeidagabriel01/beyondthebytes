@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { createHash, randomUUID } from 'node:crypto';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../prisma/prisma.service';
-import { env } from '../../config/env';
+import { EnvService } from '../../config/env.service';
 
 interface SafeUser {
   id: string;
@@ -23,6 +23,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly envService: EnvService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<SafeUser | null> {
@@ -120,11 +121,11 @@ export class AuthService {
     const jti = randomUUID();
     const accessToken = this.jwtService.sign(
       { sub: user.id, email: user.email, name: user.name, role: user.role },
-      { secret: env().JWT_SECRET, expiresIn: '15m' },
+      { secret: this.envService.env.JWT_SECRET, expiresIn: '15m' },
     );
     const refreshToken = this.jwtService.sign(
       { sub: user.id, email: user.email, name: user.name, role: user.role, familyId, jti },
-      { secret: env().JWT_REFRESH_SECRET, expiresIn: '7d' },
+      { secret: this.envService.env.JWT_REFRESH_SECRET, expiresIn: '7d' },
     );
     return { accessToken, refreshToken, tokenHash: this._sha256(refreshToken), familyId };
   }

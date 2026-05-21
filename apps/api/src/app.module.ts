@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
-import { validateEnv } from './config/env';
+import { EnvModule, EnvService } from './config/env.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -14,41 +14,40 @@ import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { NotesModule } from './modules/notes/notes.module';
 
-const _env = validateEnv();
-
-const pinoTransport =
-  _env.NODE_ENV !== 'production'
-    ? { target: 'pino-pretty', options: { colorize: true } }
-    : undefined;
-
 @Module({
   imports: [
-    LoggerModule.forRoot({
-      pinoHttp: {
-        level: _env.NODE_ENV !== 'production' ? 'debug' : 'info',
-        redact: {
-          paths: [
-            'req.headers.authorization',
-            'req.body.password',
-            'req.body.passwordHash',
-            'req.body.cpf',
-            'req.body.phone',
-            'req.body.email',
-            'res.body.cpf',
-            'res.body.phone',
-            'res.body.*.cpf',
-            'res.body.*.phone',
-            'res.body.items[*].cpf',
-            'res.body.items[*].phone',
-            'res.body[*].patient.cpf',
-            'res.body[*].patient.phone',
-            'res.body.patient.cpf',
-            'res.body.patient.phone',
-          ],
-          censor: '[REDACTED]',
+    EnvModule,
+    LoggerModule.forRootAsync({
+      inject: [EnvService],
+      useFactory: ({ env }: EnvService) => ({
+        pinoHttp: {
+          level: env.NODE_ENV !== 'production' ? 'debug' : 'info',
+          redact: {
+            paths: [
+              'req.headers.authorization',
+              'req.body.password',
+              'req.body.passwordHash',
+              'req.body.cpf',
+              'req.body.phone',
+              'req.body.email',
+              'res.body.cpf',
+              'res.body.phone',
+              'res.body.*.cpf',
+              'res.body.*.phone',
+              'res.body.items[*].cpf',
+              'res.body.items[*].phone',
+              'res.body[*].patient.cpf',
+              'res.body[*].patient.phone',
+              'res.body.patient.cpf',
+              'res.body.patient.phone',
+            ],
+            censor: '[REDACTED]',
+          },
+          ...(env.NODE_ENV !== 'production'
+            ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
+            : {}),
         },
-        ...(pinoTransport ? { transport: pinoTransport } : {}),
-      },
+      }),
     }),
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 100 }]),
     PrismaModule,

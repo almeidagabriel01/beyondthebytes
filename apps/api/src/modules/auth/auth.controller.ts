@@ -18,7 +18,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { LoginRequestSchema, type LoginRequest } from '@medschedule/shared';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import { env } from '../../config/env';
+import { EnvService } from '../../config/env.service';
 
 interface AuthenticatedUser {
   id: string;
@@ -32,6 +32,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly prisma: PrismaService,
+    private readonly envService: EnvService,
   ) {}
 
   @Post('login')
@@ -98,7 +99,7 @@ export class AuthController {
   }
 
   private _setCookies(res: Response, accessToken: string, refreshToken: string): void {
-    const isProd = env().NODE_ENV === 'production';
+    const isProd = this.envService.env.NODE_ENV === 'production';
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: isProd,

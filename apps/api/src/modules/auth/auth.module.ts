@@ -6,14 +6,15 @@ import { AuthController } from './auth.controller';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaModule } from '../../prisma/prisma.module';
-import { env } from '../../config/env';
+import { EnvService } from '../../config/env.service';
 
 @Module({
   imports: [
     PassportModule,
     JwtModule.registerAsync({
-      useFactory: () => ({
-        secret: env().JWT_SECRET,
+      inject: [EnvService],
+      useFactory: ({ env }: EnvService) => ({
+        secret: env.JWT_SECRET,
         signOptions: { expiresIn: '15m' },
       }),
     }),

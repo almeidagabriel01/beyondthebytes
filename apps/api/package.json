@@ -75,7 +75,7 @@
     },
     "collectCoverageFrom": [
       "**/*.service.ts",
-      "config/env.ts",
+      "config/env.schema.ts",
       "!**/prisma.service.ts"
     ],
     "coverageDirectory": "../coverage",

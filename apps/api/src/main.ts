@@ -4,12 +4,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
-import { env } from './config/env';
+import { EnvService } from './config/env.service';
 
 async function bootstrap(): Promise<void> {
-  const { NODE_ENV, PORT, CORS_ORIGIN } = env();
-
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const { NODE_ENV, PORT, CORS_ORIGIN } = app.get(EnvService).env;
 
   app.useLogger(app.get(Logger));
   app.use(helmet());
