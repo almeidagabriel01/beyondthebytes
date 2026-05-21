@@ -9,11 +9,11 @@ import { BottomNav } from './bottom-nav';
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <TopBarSlotProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <div className="flex h-[100dvh] overflow-hidden bg-background">
         <Sidebar />
-        <div className="ml-0 md:ml-16 lg:ml-64 flex flex-1 flex-col overflow-hidden">
+        <div className="ml-0 md:ml-16 lg:ml-64 flex min-w-0 flex-1 flex-col overflow-hidden">
           <TopBar />
-          <main className="flex-1 overflow-y-auto pb-24 md:pb-0">{children}</main>
+          <main className="min-h-0 flex-1 overflow-y-auto pb-24 md:pb-0">{children}</main>
         </div>
         <BottomNav />
       </div>
