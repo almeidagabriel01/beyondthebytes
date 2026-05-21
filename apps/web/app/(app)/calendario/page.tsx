@@ -21,8 +21,8 @@ export default async function CalendarioPage() {
   }
 
   return (
-    <div className="p-6 h-full">
-      <div className="h-full rounded-xl border border-[#cbd5e1] overflow-hidden shadow-sm">
+    <div className="p-6 min-h-full">
+      <div className="min-h-full rounded-xl border border-[#cbd5e1] shadow-sm">
         <CalendarioClient initialSummary={initialSummary} />
       </div>
     </div>
