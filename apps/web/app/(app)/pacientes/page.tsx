@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { Suspense, useCallback, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PatientList } from '@/components/patients/patient-list';
 import { PatientFormModal } from '@/components/patients/patient-form-modal';
 import { PatientDetailDrawer } from '@/components/patients/patient-detail-drawer';
 
-export default function PacientesPage() {
+function PacientesPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedId = searchParams.get('id');
@@ -48,5 +48,13 @@ export default function PacientesPage() {
 
       <PatientDetailDrawer patientId={selectedId} onClose={closeDrawer} />
     </div>
+  );
+}
+
+export default function PacientesPage() {
+  return (
+    <Suspense fallback={null}>
+      <PacientesPageInner />
+    </Suspense>
   );
 }

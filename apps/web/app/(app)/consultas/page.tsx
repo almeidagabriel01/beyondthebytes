@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -24,7 +24,7 @@ function SkeletonRow() {
   return <div className="h-20 bg-white rounded-xl border border-[#e2e8f0] animate-pulse" />;
 }
 
-export default function ConsultasPage() {
+function ConsultasPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedId = searchParams.get('id');
@@ -123,5 +123,13 @@ export default function ConsultasPage() {
 
       <AppointmentDetailDrawer appointmentId={selectedId} onClose={closeDrawer} />
     </div>
+  );
+}
+
+export default function ConsultasPage() {
+  return (
+    <Suspense fallback={null}>
+      <ConsultasPageInner />
+    </Suspense>
   );
 }
