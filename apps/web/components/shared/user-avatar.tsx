@@ -1,8 +1,10 @@
 import { cn, getInitials } from '@/lib/utils';
 
 interface UserAvatarProps {
-  name?: string | null;
-  avatarUrl?: string | null;
+  // string | null | undefined — accepts the loose shape returned by useQuery
+  // (data is `undefined` while loading, `null` when an avatar field is unset).
+  name?: string | null | undefined;
+  avatarUrl?: string | null | undefined;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }

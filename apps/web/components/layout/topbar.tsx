@@ -1,7 +1,13 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTopBarSlot } from '@/context/topbar-slot';
+import { fetchMe, logout } from '@/lib/auth';
+import { UserAvatar } from '@/components/shared/user-avatar';
 
 type PageConfig = {
   title: string;
@@ -24,6 +30,64 @@ const DEFAULT_CONFIG: PageConfig = { title: 'Dashboard', icon: 'home' };
 export default function TopBar() {
   const pathname = usePathname();
   const { rightSlot, onNewAppointment } = useTopBarSlot();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const { data: me } = useQuery({
+    queryKey: ['me'],
+    queryFn: fetchMe,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSettled: () => {
+      queryClient.clear();
+      router.push('/login');
+    },
+  });
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Position the portaled menu relative to the avatar button (drops DOWN).
+  useLayoutEffect(() => {
+    if (!menuOpen || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setMenuPosition({
+      top: rect.bottom + 8,
+      right: window.innerWidth - rect.right,
+    });
+  }, [menuOpen]);
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  const handleClickOutside = useCallback((e: MouseEvent) => {
+    const target = e.target as Node;
+    if (triggerRef.current?.contains(target)) return;
+    if (menuRef.current?.contains(target)) return;
+    setMenuOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKey);
+    window.addEventListener('resize', closeMenu);
+    window.addEventListener('scroll', closeMenu, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKey);
+      window.removeEventListener('resize', closeMenu);
+      window.removeEventListener('scroll', closeMenu, true);
+    };
+  }, [menuOpen, handleClickOutside, closeMenu]);
 
   const config =
     Object.entries(PAGE_CONFIG).find(([key]) => pathname.startsWith(key))?.[1] ?? DEFAULT_CONFIG;
@@ -106,20 +170,74 @@ export default function TopBar() {
           />
         </button>
 
-        {/* User avatar — always visible */}
-        <div
-          className="w-10 h-10 rounded-full bg-[#e2e8f0] overflow-hidden border border-[#cbd5e1] cursor-pointer flex items-center justify-center"
-          aria-label="Perfil do usuário"
-          role="button"
-          tabIndex={0}
+        {/* User avatar — opens dropdown */}
+        <button
+          ref={triggerRef}
+          type="button"
+          aria-label="Menu do usuário"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((o) => !o)}
+          className="rounded-full focus:outline-none focus:ring-2 focus:ring-[#4648d4] focus:ring-offset-2"
         >
-          <span
-            className="material-symbols-outlined text-[20px] leading-none text-[#475569]"
-            aria-hidden="true"
-          >
-            person
-          </span>
-        </div>
+          <UserAvatar name={me?.name} avatarUrl={me?.avatarUrl ?? null} size="md" />
+        </button>
+
+        {menuOpen &&
+          menuPosition &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              ref={menuRef}
+              role="menu"
+              style={{ top: menuPosition.top, right: menuPosition.right }}
+              className="fixed z-[60] min-w-[240px] rounded-xl border border-[#e2e8f0] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.1)]"
+            >
+              <div className="flex items-center gap-3 px-4 py-3">
+                <UserAvatar name={me?.name} avatarUrl={me?.avatarUrl ?? null} size="md" />
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-semibold text-[#0f172a]">
+                    {me?.name || 'Usuário'}
+                  </p>
+                  <p className="truncate text-[12px] text-[#64748b]">{me?.email ?? '...'}</p>
+                </div>
+              </div>
+              <div className="border-t border-[#e2e8f0]" />
+              <Link
+                href="/configuracoes"
+                role="menuitem"
+                onClick={closeMenu}
+                className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#0f172a] hover:bg-[#f8fafc] transition-colors"
+              >
+                <span
+                  className="material-symbols-outlined text-[18px] leading-none"
+                  aria-hidden="true"
+                >
+                  settings
+                </span>
+                Configurações
+              </Link>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={logoutMutation.isPending}
+                onClick={() => {
+                  closeMenu();
+                  logoutMutation.mutate();
+                }}
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-[#ba1a1a] hover:bg-[#fff1f0] transition-colors disabled:opacity-60 rounded-b-xl"
+              >
+                <span
+                  className="material-symbols-outlined text-[18px] leading-none"
+                  aria-hidden="true"
+                >
+                  logout
+                </span>
+                {logoutMutation.isPending ? 'Saindo...' : 'Sair'}
+              </button>
+            </div>,
+            document.body,
+          )}
       </div>
     </header>
   );
