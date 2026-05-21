@@ -50,11 +50,14 @@ export async function fetchHistoryAppointments(
   statuses: AppointmentStatus[],
   init?: RequestInit,
 ): Promise<AppointmentResponse[]> {
+  // take=100 matches API MAX_TAKE; UI hint when items.length === 100 informs user
+  // to narrow the date range (date inputs are constrained to <= 365d server-side).
   const qs = new URLSearchParams({
     from,
     to,
     status: statuses.join(','),
     order: 'desc',
+    take: '100',
   });
   const res = await fetch(`${API_BASE}/appointments?${qs}`, {
     credentials: 'include',

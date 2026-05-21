@@ -78,6 +78,7 @@ export function HistoricoClient({ selectedId }: Props) {
         </label>
         <p className="text-[13px] text-[#64748b] ml-auto">
           {items.length} {items.length === 1 ? 'resultado' : 'resultados'}
+          {items.length === 100 ? ' (limite atingido — reduza o período)' : ''}
         </p>
       </div>
 

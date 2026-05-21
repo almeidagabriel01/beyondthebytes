@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   UnprocessableEntityException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Prisma, AppointmentType, AppointmentStatus } from '@prisma/client';
 import { addMinutes } from 'date-fns';
@@ -82,26 +83,53 @@ export class AppointmentsService {
     return Array.from(map.entries()).map(([date, counts]) => ({ date, counts }));
   }
 
+  static readonly MAX_RANGE_DAYS = 365;
+  static readonly DEFAULT_TAKE = 50;
+  static readonly MAX_TAKE = 100;
+
   async list(query: ListAppointmentsQuery, userId: string): Promise<AppointmentResponse[]> {
-    const { date, from, to, status, order } = query;
+    const { date, from, to, status, order, take, skip } = query;
 
     let dateFilter: Prisma.AppointmentWhereInput = {};
+    let fromDate: Date | undefined;
+    let toDate: Date | undefined;
 
     if (date) {
       const dayStart = new Date(date + 'T00:00:00-03:00');
       const dayEnd = new Date(date + 'T23:59:59-03:00');
       dateFilter = { startsAt: { gte: dayStart, lte: dayEnd } };
     } else if (from || to) {
+      if (from) fromDate = this._parseRangeBoundary(from, 'start');
+      if (to) toDate = this._parseRangeBoundary(to, 'end');
       dateFilter = {
         startsAt: {
-          ...(from ? { gte: this._parseRangeBoundary(from, 'start') } : {}),
-          ...(to ? { lte: this._parseRangeBoundary(to, 'end') } : {}),
+          ...(fromDate ? { gte: fromDate } : {}),
+          ...(toDate ? { lte: toDate } : {}),
         },
       };
     }
 
+    // Cap date range to prevent abusive queries scanning years of history.
+    if (fromDate && toDate) {
+      const days = (toDate.getTime() - fromDate.getTime()) / (24 * 60 * 60 * 1000);
+      if (days > AppointmentsService.MAX_RANGE_DAYS) {
+        throw new BadRequestException({
+          code: 'RANGE_TOO_WIDE',
+          message: `Date range exceeds ${AppointmentsService.MAX_RANGE_DAYS} days`,
+        });
+      }
+    }
+
     const statusFilter: Prisma.AppointmentWhereInput =
       status && status.length > 0 ? { status: { in: status as AppointmentStatus[] } } : {};
+
+    // take is already validated to be 1..100 by Zod; clamp here as a belt-and-braces
+    // safeguard in case the schema is bypassed (e.g. internal callers).
+    const effectiveTake = Math.min(
+      take ?? AppointmentsService.DEFAULT_TAKE,
+      AppointmentsService.MAX_TAKE,
+    );
+    const effectiveSkip = skip ?? 0;
 
     const appointments = await this.prisma.appointment.findMany({
       where: {
@@ -113,6 +141,8 @@ export class AppointmentsService {
         patient: { select: { id: true, fullName: true, cpf: true, phone: true } },
       },
       orderBy: { startsAt: order ?? 'asc' },
+      take: effectiveTake,
+      skip: effectiveSkip,
     });
 
     return appointments.map((a) => this._toResponse(a));

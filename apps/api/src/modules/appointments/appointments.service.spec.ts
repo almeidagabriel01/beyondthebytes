@@ -1,5 +1,10 @@
 import { Test, type TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AppointmentsService } from './appointments.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -262,6 +267,48 @@ describe('AppointmentsService', () => {
       expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ orderBy: { startsAt: 'desc' } }),
       );
+    });
+
+    it('uses default take=50 and skip=0 when not provided', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([]);
+      await service.list({}, 'user-1');
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 50, skip: 0 }),
+      );
+    });
+
+    it('passes through valid take and skip', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([]);
+      await service.list({ take: 25, skip: 10 }, 'user-1');
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 25, skip: 10 }),
+      );
+    });
+
+    it('caps take at MAX_TAKE (100) even if Zod is bypassed', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([]);
+      // simulate a caller passing 999 directly (bypassing Zod schema)
+      await service.list({ take: 999 } as unknown as Parameters<typeof service.list>[0], 'user-1');
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 100 }),
+      );
+    });
+
+    it('throws RANGE_TOO_WIDE when from/to span exceeds 365 days', async () => {
+      const err = await service
+        .list({ from: '2099-01-01', to: '2100-06-01' }, 'user-1')
+        .catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(BadRequestException);
+      expect((err as BadRequestException).getResponse()).toMatchObject({
+        code: 'RANGE_TOO_WIDE',
+      });
+      expect(mockPrisma.appointment.findMany).not.toHaveBeenCalled();
+    });
+
+    it('allows ranges up to 365 days', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([]);
+      await service.list({ from: '2099-01-01', to: '2099-12-15' }, 'user-1');
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalled();
     });
   });
 
