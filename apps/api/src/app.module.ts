@@ -8,6 +8,7 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { CsrfOriginGuard } from './common/guards/csrf-origin.guard';
 import { PatientsModule } from './modules/patients/patients.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -60,8 +61,12 @@ const pinoTransport =
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
-    // ORDER MATTERS: ThrottlerGuard checks rate limits BEFORE auth
+    // ORDER MATTERS:
+    //  1. ThrottlerGuard — rate-limit first (cheapest gate)
+    //  2. CsrfOriginGuard — reject bad-origin requests before JWT work
+    //  3. JwtAuthGuard — authenticate
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: CsrfOriginGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
