@@ -203,10 +203,10 @@ Mitigações no código:
 - Pino logger com redaction de `password`, `cpf`, `phone`, `email` em campos sensíveis
 - ThrottlerGuard global (100 req/min) + throttler específico no `/auth/login` (5/min)
 
-**`pnpm audit --prod` em 2026-05-21**: 0 high + 1 moderate em deps transitivas.
+**`pnpm audit --prod` em 2026-05-21**: `No known vulnerabilities found` (0 vulnerabilidades em qualquer severidade).
 
 - Resolvidos via `pnpm.overrides` em `package.json` raiz: `lodash` (`>=4.18.0`, fecha GHSA-r5fr-rjxr-66jc high + GHSA-f23m-r3pf-42rh + GHSA-xxjr-mmjv-4gpg moderates via `@nestjs/swagger`), `js-yaml` (`>=4.1.1`, GHSA-mh29-5h37-fv8m), `file-type` (`>=21.3.2`, GHSA-5v7r-6r5c-r473 + GHSA-j47w-4g3g-c36v via `@nestjs/common`), `postcss` (`>=8.5.10`, GHSA-qx2v-qp2m-jg93 via `next`).
-- **Restante (1 moderate)**: `@nestjs/core` ≤11.1.17 (GHSA-36xv-jgw5-4q75 — injection em output de erro). Patch só em `@nestjs/core@11.1.18+`, e o projeto está na linha 10.x. Bump pra 11.x é major com breaking changes (lifecycle, DI). Risco real baixo: a vulnerabilidade afeta apenas a serialização de mensagens de erro internas; não há vetor cliente-controlado direto nos endpoints atuais. Acompanhar e migrar para 11.x em fase dedicada.
+- `@nestjs/*` atualizados para 11.x (`@nestjs/core@^11.1.21`, `@nestjs/common@^11.1.21`, `@nestjs/platform-express@^11.1.21`, `@nestjs/swagger@^11.4.3`, `@nestjs/throttler@^6.5.0`, `@nestjs/testing@^11.1.21`, `@nestjs/cli@^11.0.21`, `@nestjs/schematics@^11.1.0`), fechando GHSA-36xv-jgw5-4q75 (injection em output de erro de `@nestjs/core`). Sem breaking changes no código de aplicação — todos os testes unitários (95/95) e build verde.
 
 ---
 
