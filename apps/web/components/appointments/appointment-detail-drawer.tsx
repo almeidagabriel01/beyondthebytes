@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type {
   AppointmentResponse,
   AppointmentEventResponse,
   AppointmentStatus,
+  ClinicalNoteResponse,
+  TiptapDoc,
 } from '@medschedule/shared';
 import { isTerminal } from '@medschedule/shared';
 import { RightDrawer } from '@/components/shared/right-drawer';
@@ -16,12 +18,14 @@ import { StatusTimeline } from '@/components/appointments/status-timeline';
 import { StatusActions } from '@/components/appointments/status-actions';
 import { CancelAppointmentModal } from '@/components/appointments/cancel-appointment-modal';
 import { EditAppointmentModal } from '@/components/appointments/edit-appointment-modal';
-import { NotesModal } from '@/components/notes/notes-modal';
+import { NoteEditor } from '@/components/notes/note-editor';
+import { NoteHistoryDrawer } from '@/components/notes/note-history-drawer';
 import {
   fetchAppointment,
   fetchAppointmentEvents,
   transitionAppointment,
 } from '@/lib/appointments';
+import { fetchAppointmentNotes, createAppointmentNote, patchClinicalNote } from '@/lib/notes';
 
 const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
   CONSULTA: 'Consulta',
@@ -29,6 +33,8 @@ const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
   AVALIACAO: 'Avaliação',
   PROCEDIMENTO: 'Procedimento',
 };
+
+const EMPTY_DOC: TiptapDoc = { type: 'doc', content: [{ type: 'paragraph' }] };
 
 function patientInitials(name: string): string {
   return name
@@ -48,6 +54,10 @@ function formatDateTime(startsAt: string, endsAt: string): string {
   return `${date}, ${timeRange}`;
 }
 
+function formatHHMM(iso: string): string {
+  return format(new Date(iso), 'HH:mm');
+}
+
 function invalidateAll(qc: ReturnType<typeof useQueryClient>, appointmentId: string) {
   qc.invalidateQueries({ queryKey: ['appointment', appointmentId] });
   qc.invalidateQueries({ queryKey: ['appointment', appointmentId, 'events'] });
@@ -63,16 +73,162 @@ interface AppointmentDetailDrawerProps {
 
 interface DrawerBodyProps {
   appointmentId: string;
+  status: AppointmentStatus | null;
   onClose: () => void;
 }
 
-function DrawerBody({ appointmentId, onClose }: DrawerBodyProps) {
+interface NoteSectionProps {
+  appointmentId: string;
+  canSave: boolean;
+}
+
+function NoteSection({ appointmentId, canSave }: NoteSectionProps) {
+  const qc = useQueryClient();
+  const draftRef = useRef<TiptapDoc>(EMPTY_DOC);
+  const [showHistory, setShowHistory] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [justSavedAt, setJustSavedAt] = useState<string | null>(null);
+
+  const notesQuery = useQuery({
+    queryKey: ['notes', appointmentId],
+    queryFn: ({ signal }) => fetchAppointmentNotes(appointmentId, { signal }),
+    staleTime: 30_000,
+  });
+
+  const currentNote: ClinicalNoteResponse | undefined = notesQuery.data?.[0];
+  const initialDoc: TiptapDoc = currentNote?.revisions[0]?.content ?? EMPTY_DOC;
+  const latestRevisionAt = currentNote?.revisions[0]?.createdAt ?? null;
+
+  // Seed draftRef when the note identity changes — so save() ships loaded content
+  // if the user opens and clicks save without typing.
+  useEffect(() => {
+    draftRef.current = currentNote?.revisions[0]?.content ?? EMPTY_DOC;
+  }, [currentNote]);
+
+  // Clear the "Salvo HH:MM" flash after ~3s
+  useEffect(() => {
+    if (!justSavedAt) return;
+    const t = setTimeout(() => setJustSavedAt(null), 3000);
+    return () => clearTimeout(t);
+  }, [justSavedAt]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const doc = draftRef.current;
+      if (currentNote) {
+        return patchClinicalNote(currentNote.id, { content: doc });
+      }
+      return createAppointmentNote(appointmentId, { content: doc });
+    },
+    onSuccess: () => {
+      setSaveError(null);
+      setJustSavedAt(new Date().toISOString());
+      void qc.invalidateQueries({ queryKey: ['notes', appointmentId] });
+    },
+    onError: (err: Error) => {
+      setSaveError(err.message);
+    },
+  });
+
+  const editorKey = `${currentNote?.id ?? 'new'}:${currentNote?.revisions[0]?.id ?? 'fresh'}`;
+
+  const autosaveLabel = justSavedAt
+    ? `Salvo ${formatHHMM(justSavedAt)}`
+    : latestRevisionAt
+      ? `Autosave ${formatHHMM(latestRevisionAt)}`
+      : null;
+
+  return (
+    <>
+      <section className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between gap-3">
+          <h3 className="text-[14px] font-semibold text-[#0f172a] flex items-center gap-2">
+            <span
+              className="material-symbols-outlined text-[#4648d4] text-[18px]"
+              aria-hidden="true"
+            >
+              edit_note
+            </span>
+            Anotação Clínica
+          </h3>
+          {autosaveLabel && (
+            <span className="text-[11px] text-[#94a3b8] font-medium">{autosaveLabel}</span>
+          )}
+        </div>
+
+        <div className="p-5">
+          {notesQuery.isSuccess ? (
+            <NoteEditor
+              key={editorKey}
+              initialContent={initialDoc}
+              onChange={(doc) => {
+                draftRef.current = doc;
+              }}
+            />
+          ) : notesQuery.isError ? (
+            <p className="text-[13px] text-[#ba1a1a]">
+              Erro ao carregar anotação. Tente fechar e reabrir o detalhe.
+            </p>
+          ) : (
+            <p className="text-[13px] text-[#64748b]">Carregando…</p>
+          )}
+
+          {saveError && (
+            <p className="mt-3 text-[13px] text-[#ba1a1a] bg-[#ffdad6]/40 px-3 py-2 rounded-lg border border-[#ba1a1a]/20">
+              {saveError}
+            </p>
+          )}
+        </div>
+
+        <div className="px-6 py-3 border-t border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setShowHistory(true)}
+            disabled={!currentNote}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#475569] hover:bg-white border border-[#e2e8f0] bg-white disabled:opacity-40 disabled:hover:bg-white"
+          >
+            <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
+              history
+            </span>
+            Histórico de revisões
+          </button>
+
+          <div className="flex items-center gap-3">
+            {!canSave && (
+              <span className="text-[11px] text-[#94a3b8] font-medium">
+                Finalize a consulta para salvar
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => save.mutate()}
+              disabled={!canSave || save.isPending || !notesQuery.isSuccess}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#4648d4] text-white text-[12px] font-semibold shadow-sm hover:bg-[#3a3cb8] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
+                save
+              </span>
+              {save.isPending ? 'Salvando…' : 'Salvar'}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <NoteHistoryDrawer
+        note={currentNote ?? null}
+        open={showHistory}
+        onClose={() => setShowHistory(false)}
+      />
+    </>
+  );
+}
+
+function DrawerBody({ appointmentId, onClose }: Omit<DrawerBodyProps, 'status'>) {
   const qc = useQueryClient();
   const [transitioning, setTransitioning] = useState(false);
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const [showCancel, setShowCancel] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
-  const [showNotes, setShowNotes] = useState(false);
 
   const apptQuery = useQuery<AppointmentResponse>({
     queryKey: ['appointment', appointmentId],
@@ -144,6 +300,7 @@ function DrawerBody({ appointmentId, onClose }: DrawerBodyProps) {
   const appt = apptQuery.data;
   const events = eventsQuery.data ?? [];
   const terminal = isTerminal(appt.status);
+  const canSaveNote = appt.status === 'REALIZADO';
 
   const headerActions = !terminal ? (
     <button
@@ -264,31 +421,9 @@ function DrawerBody({ appointmentId, onClose }: DrawerBodyProps) {
             )}
           </section>
 
-          {appt.status === 'REALIZADO' && (
-            <section className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm p-5 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <h3 className="text-[14px] font-semibold text-[#0f172a] flex items-center gap-2">
-                  <span
-                    className="material-symbols-outlined text-[#4648d4] text-[18px]"
-                    aria-hidden="true"
-                  >
-                    edit_note
-                  </span>
-                  Observações Clínicas
-                </h3>
-                <p className="mt-1 text-[12px] text-[#64748b]">
-                  Registre o atendimento. As versões são preservadas.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowNotes(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#4648d4] text-white text-[12px] font-semibold shadow-sm hover:bg-[#3a3cb8] shrink-0"
-              >
-                <span className="material-symbols-outlined text-[16px]">stylus_note</span>
-                Abrir editor
-              </button>
-            </section>
+          {/* Anotação Clínica — inline editor (visible for all statuses, save gated on REALIZADO) */}
+          {appt.status !== 'CANCELADO' && (
+            <NoteSection appointmentId={appt.id} canSave={canSaveNote} />
           )}
 
           <section className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm p-5">
@@ -324,10 +459,6 @@ function DrawerBody({ appointmentId, onClose }: DrawerBodyProps) {
             invalidateAll(qc, appointmentId);
           }}
         />
-      )}
-
-      {showNotes && (
-        <NotesModal appointmentId={appt.id} open={showNotes} onClose={() => setShowNotes(false)} />
       )}
     </>
   );
