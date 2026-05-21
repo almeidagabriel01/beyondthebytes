@@ -11,7 +11,7 @@ import { clientEnv } from '@/lib/env';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') ?? '/calendario';
+  const redirectTo = searchParams.get('redirect') ?? '/dashboard';
   const [showPassword, setShowPassword] = useState(false);
 
   const {

@@ -34,7 +34,7 @@ export default function NotFound() {
         </p>
 
         <Link
-          href="/calendario"
+          href="/dashboard"
           className="group inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-8 py-3 text-xs font-semibold tracking-wider text-primary-foreground shadow-[0_4px_12px_rgba(70,72,212,0.25)] transition-all duration-200 hover:opacity-90 hover:shadow-[0_6px_16px_rgba(70,72,212,0.35)] active:scale-95"
         >
           <span
@@ -43,7 +43,7 @@ export default function NotFound() {
           >
             arrow_back
           </span>
-          Voltar para agenda
+          Voltar para dashboard
         </Link>
       </div>
     </main>
