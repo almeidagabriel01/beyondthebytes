@@ -57,12 +57,22 @@ export class AuthController {
   }
 
   @Post('logout')
+  @Public()
   @HttpCode(HttpStatus.NO_CONTENT)
-  async logout(
-    @Req() req: Request & { user: AuthenticatedUser },
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    await this.authService.logout(req.user.id);
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    // Logout must work even when the JWT is invalid/expired — the goal is to clear
+    // server-side refresh tokens (best-effort) and remove the client cookies.
+    const token = req.cookies?.['access_token'] as string | undefined;
+    if (token) {
+      try {
+        const payload = this.authService.decodeAccessToken(token);
+        if (payload?.sub) {
+          await this.authService.logout(payload.sub);
+        }
+      } catch {
+        // ignore: token may be malformed / expired — still clear cookies below
+      }
+    }
     res.cookie('access_token', '', { httpOnly: true, maxAge: 0, path: '/' });
     res.cookie('refresh_token', '', { httpOnly: true, maxAge: 0, path: '/auth/refresh' });
   }

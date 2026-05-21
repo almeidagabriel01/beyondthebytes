@@ -21,6 +21,15 @@ async function fetchMe(): Promise<MeResponse> {
   const res = await fetch(`${clientEnv.NEXT_PUBLIC_API_URL}/auth/me`, {
     credentials: 'include',
   });
+  if (res.status === 401) {
+    // Session expired / cookie invalid — bounce to login. Middleware can't catch
+    // XHR 401s, so we force the redirect here.
+    if (typeof window !== 'undefined') {
+      const redirect = encodeURIComponent(window.location.pathname);
+      window.location.href = `/login?redirect=${redirect}`;
+    }
+    throw new Error('Session expired');
+  }
   if (!res.ok) throw new Error('Not authenticated');
   return res.json() as Promise<MeResponse>;
 }

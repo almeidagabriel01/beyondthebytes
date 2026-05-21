@@ -107,6 +107,11 @@ export class AuthService {
     });
   }
 
+  decodeAccessToken(token: string): { sub: string } | null {
+    const decoded = this.jwtService.decode(token) as { sub?: string } | null;
+    return decoded?.sub ? { sub: decoded.sub } : null;
+  }
+
   private _issueTokenPair(
     user: SafeUser,
     existingFamilyId?: string,

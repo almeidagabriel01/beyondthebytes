@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 type TopBarSlotContextType = {
   rightSlot: ReactNode | null;
@@ -20,18 +20,18 @@ export function TopBarSlotProvider({ children }: { children: ReactNode }) {
   const [rightSlot, setRightSlot] = useState<ReactNode | null>(null);
   const [onNewAppointment, setOnNewAppointmentRaw] = useState<(() => void) | null>(null);
 
-  // Wrap in object to avoid React treating the fn as a state updater
-  const setOnNewAppointment = (fn: (() => void) | null) => {
+  // Stable identity: wrap fn-state setter so consumers can list it in useEffect deps
+  // without retriggering the effect on every Provider render.
+  const setOnNewAppointment = useCallback((fn: (() => void) | null) => {
     setOnNewAppointmentRaw(fn ? () => fn : null);
-  };
+  }, []);
 
-  return (
-    <TopBarSlotContext.Provider
-      value={{ rightSlot, setRightSlot, onNewAppointment, setOnNewAppointment }}
-    >
-      {children}
-    </TopBarSlotContext.Provider>
+  const value = useMemo(
+    () => ({ rightSlot, setRightSlot, onNewAppointment, setOnNewAppointment }),
+    [rightSlot, onNewAppointment, setOnNewAppointment],
   );
+
+  return <TopBarSlotContext.Provider value={value}>{children}</TopBarSlotContext.Provider>;
 }
 
 export function useTopBarSlot() {
