@@ -104,8 +104,8 @@ export function CalendarioClient({ initialSummary }: CalendarioClientProps) {
             />
           </div>
 
-          {/* Day panel */}
-          <div className="w-80 xl:w-96 border-l border-[#cbd5e1] bg-white overflow-y-auto p-4 shrink-0">
+          {/* Day panel — two cards, flex column */}
+          <div className="w-full xl:w-[400px] flex flex-col gap-6 overflow-y-auto shrink-0 p-4">
             <DayPanel
               selectedDay={selectedDay}
               onCancelAppointment={(appt) => setCancelTarget(appt)}
