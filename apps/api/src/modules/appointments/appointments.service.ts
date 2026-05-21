@@ -7,7 +7,7 @@ import {
 import { Prisma, AppointmentType, AppointmentStatus } from '@prisma/client';
 import { addMinutes } from 'date-fns';
 import { PrismaService } from '../../prisma/prisma.service';
-import { isValidSlot, isFutureSlot } from '@medschedule/shared';
+import { isValidSlot, isFutureSlot, isTerminal } from '@medschedule/shared';
 import type {
   CreateAppointment,
   UpdateAppointment,
@@ -15,9 +15,8 @@ import type {
   ListAppointmentsQuery,
   AppointmentResponse,
   MonthSummaryItem,
+  AppointmentStatus as SharedAppointmentStatus,
 } from '@medschedule/shared';
-
-const TERMINAL_STATUSES = new Set(['CANCELADO', 'REALIZADO']);
 
 type AppointmentWithPatient = {
   id: string;
@@ -191,7 +190,7 @@ export class AppointmentsService {
     const existing = await this.prisma.appointment.findFirst({ where: { id, userId } });
     if (!existing) throw new NotFoundException('Consulta não encontrada');
 
-    if (TERMINAL_STATUSES.has(existing.status)) {
+    if (isTerminal(existing.status as SharedAppointmentStatus)) {
       throw new UnprocessableEntityException({
         code: 'TERMINAL_STATUS',
         message: 'Não é possível editar uma consulta cancelada ou realizada',
@@ -262,7 +261,7 @@ export class AppointmentsService {
     const existing = await this.prisma.appointment.findFirst({ where: { id, userId } });
     if (!existing) throw new NotFoundException('Consulta não encontrada');
 
-    if (TERMINAL_STATUSES.has(existing.status)) {
+    if (isTerminal(existing.status as SharedAppointmentStatus)) {
       throw new UnprocessableEntityException({
         code: 'TERMINAL_STATUS',
         message: 'Não é possível editar uma consulta cancelada ou realizada',
