@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { AppointmentStatus as PrismaStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -31,14 +36,33 @@ export class TransitionsService {
       });
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.appointment.update({
-        where: { id },
-        data: {
-          status: to as PrismaStatus,
-          ...(to === 'CANCELADO' ? { cancelledAt: new Date(), cancelReason: reason ?? null } : {}),
-        },
+    if (to === 'CANCELADO' && !reason?.trim()) {
+      throw new UnprocessableEntityException({
+        code: 'CANCEL_REASON_REQUIRED',
+        message: 'Motivo de cancelamento é obrigatório.',
       });
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.appointment
+        .update({
+          where: { id, status: from as PrismaStatus },
+          data: {
+            status: to as PrismaStatus,
+            ...(to === 'CANCELADO'
+              ? { cancelledAt: new Date(), cancelReason: reason ?? null }
+              : {}),
+          },
+        })
+        .catch((e: unknown) => {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+            throw new ConflictException({
+              code: 'STATUS_CONFLICT',
+              message: 'O status da consulta foi alterado por outra requisição.',
+            });
+          }
+          throw e;
+        });
       await tx.appointmentEvent.create({
         data: {
           appointmentId: id,
@@ -46,7 +70,7 @@ export class TransitionsService {
           fromStatus: from,
           toStatus: to,
           byUserId: userId,
-          payload: reason ? ({ reason } as Prisma.InputJsonValue) : Prisma.DbNull,
+          payload: reason ? ({ reason: reason.trim() } as Prisma.InputJsonValue) : Prisma.DbNull,
         },
       });
     });

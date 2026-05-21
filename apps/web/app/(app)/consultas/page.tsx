@@ -1,14 +1,15 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import type { AppointmentResponse } from '@medschedule/shared';
 import { StatusBadge } from '@/components/shared/status-badge';
 
 const API = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
 
 async function fetchTodayAppointments(cookieHeader: string): Promise<AppointmentResponse[]> {
-  const date = format(new Date(), 'yyyy-MM-dd');
+  const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(
+    new Date(),
+  );
   const res = await fetch(`${API}/appointments?date=${date}`, {
     headers: { Cookie: cookieHeader },
     cache: 'no-store',

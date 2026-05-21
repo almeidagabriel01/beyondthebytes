@@ -23,7 +23,7 @@ async function fetchEvents(id: string, cookieHeader: string): Promise<Appointmen
     headers: { Cookie: cookieHeader },
     cache: 'no-store',
   });
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`Failed to fetch events: ${res.status}`);
   return res.json() as Promise<AppointmentEventResponse[]>;
 }
 

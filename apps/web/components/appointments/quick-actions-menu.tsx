@@ -34,6 +34,7 @@ export function QuickActionsMenu({
 }: QuickActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
@@ -64,9 +65,12 @@ export function QuickActionsMenu({
 
     setLoading(true);
     setOpen(false);
+    setError(null);
     try {
       await transitionAppointment(appointment.id, action.to);
       await qc.invalidateQueries({ queryKey });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao atualizar status.');
     } finally {
       setLoading(false);
     }
@@ -74,6 +78,11 @@ export function QuickActionsMenu({
 
   return (
     <div ref={menuRef} className="relative" onClick={(e) => e.stopPropagation()}>
+      {error && (
+        <div className="absolute right-0 bottom-full mb-1 z-50 bg-[#ffdad6] text-[#ba1a1a] text-[11px] rounded-md px-2 py-1 whitespace-nowrap shadow-sm border border-[#ba1a1a]/20">
+          {error}
+        </div>
+      )}
       <button
         type="button"
         aria-label="Ações rápidas"
@@ -81,6 +90,7 @@ export function QuickActionsMenu({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          setError(null);
           setOpen((o) => !o);
         }}
         className="p-1.5 text-[#94a3b8] hover:text-[#4648d4] hover:bg-[#e1e0ff] rounded-md transition-colors disabled:opacity-40"

@@ -116,6 +116,24 @@ describe('TransitionsService', () => {
         response: expect.objectContaining({ code: 'INVALID_TRANSITION' }),
       });
     });
+
+    it('throws CANCEL_REASON_REQUIRED when cancelling without a reason', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue({ ...baseAppt, status: 'AGENDADO' });
+      const err = await service.transition('appt-1', 'CANCELADO', 'user-1').catch((e) => e);
+      expect(err).toBeInstanceOf(UnprocessableEntityException);
+      expect((err as UnprocessableEntityException).getResponse()).toMatchObject({
+        code: 'CANCEL_REASON_REQUIRED',
+      });
+    });
+
+    it('throws CANCEL_REASON_REQUIRED when reason is blank', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue({ ...baseAppt, status: 'AGENDADO' });
+      const err = await service.transition('appt-1', 'CANCELADO', 'user-1', '   ').catch((e) => e);
+      expect(err).toBeInstanceOf(UnprocessableEntityException);
+      expect((err as UnprocessableEntityException).getResponse()).toMatchObject({
+        code: 'CANCEL_REASON_REQUIRED',
+      });
+    });
   });
 
   // ── advance ────────────────────────────────────────────────────────────────

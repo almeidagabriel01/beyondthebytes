@@ -174,7 +174,11 @@ export class AppointmentsService {
             action: 'CREATED',
             toStatus: 'AGENDADO',
             byUserId: userId,
-            payload: { dto } as Prisma.InputJsonValue,
+            payload: {
+              type: dto.type,
+              insurance: dto.insurance,
+              patientId: dto.patientId,
+            } as Prisma.InputJsonValue,
           },
         });
         return created;
@@ -245,7 +249,10 @@ export class AppointmentsService {
             fromStatus: existing.status,
             toStatus: existing.status,
             byUserId: userId,
-            payload: { dto } as Prisma.InputJsonValue,
+            payload: {
+              type: dto.type,
+              insurance: dto.insurance,
+            } as Prisma.InputJsonValue,
           },
         });
         return updated;

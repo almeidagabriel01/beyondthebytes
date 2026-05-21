@@ -19,10 +19,14 @@ async function handleResponse<T>(res: Response): Promise<T> {
   } catch {
     body = await res.text();
   }
-  throw Object.assign(new Error(`Request failed with status ${res.status}`), {
-    status: res.status,
-    body,
-  });
+  const message =
+    body !== null &&
+    typeof body === 'object' &&
+    'message' in body &&
+    typeof (body as Record<string, unknown>).message === 'string'
+      ? (body as { message: string }).message
+      : `Erro ${res.status}`;
+  throw Object.assign(new Error(message), { status: res.status, body });
 }
 
 function pad(n: number): string {

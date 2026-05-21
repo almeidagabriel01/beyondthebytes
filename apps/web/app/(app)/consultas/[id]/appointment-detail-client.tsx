@@ -27,6 +27,7 @@ const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
 function patientInitials(name: string): string {
   return name
     .split(' ')
+    .filter(Boolean)
     .slice(0, 2)
     .map((w) => w[0])
     .join('')
@@ -52,6 +53,7 @@ export function AppointmentDetailClient({
 }: AppointmentDetailClientProps) {
   const router = useRouter();
   const [transitioning, setTransitioning] = useState(false);
+  const [transitionError, setTransitionError] = useState<string | null>(null);
   const [showCancel, setShowCancel] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
 
@@ -62,9 +64,12 @@ export function AppointmentDetailClient({
         return;
       }
       setTransitioning(true);
+      setTransitionError(null);
       try {
         await transitionAppointment(appt.id, to);
         router.refresh();
+      } catch (err: unknown) {
+        setTransitionError(err instanceof Error ? err.message : 'Erro ao atualizar status.');
       } finally {
         setTransitioning(false);
       }
@@ -187,7 +192,12 @@ export function AppointmentDetailClient({
         {/* Sticky footer actions */}
         {!terminal && (
           <footer className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-[#e2e8f0] px-4 md:px-8 py-4 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto space-y-2">
+              {transitionError && (
+                <p className="text-[13px] text-[#ba1a1a] bg-[#ffdad6]/40 px-3 py-2 rounded-lg border border-[#ba1a1a]/20 text-center">
+                  {transitionError}
+                </p>
+              )}
               <StatusActions
                 currentStatus={appt.status}
                 onTransition={handleTransition}

@@ -1,7 +1,7 @@
 'use client';
 
 import type { AppointmentStatus } from '@medschedule/shared';
-import { canTransition } from '@medschedule/shared';
+import { canTransition, isTerminal } from '@medschedule/shared';
 
 interface StatusAction {
   to: AppointmentStatus;
@@ -37,7 +37,7 @@ export function StatusActions({
   loading,
 }: StatusActionsProps) {
   const availableActions = ACTIONS.filter((a) => canTransition(currentStatus, a.to));
-  const isTerminalStatus = availableActions.length === 0;
+  const isTerminalStatus = isTerminal(currentStatus);
 
   return (
     <div className="flex items-center justify-between gap-3">

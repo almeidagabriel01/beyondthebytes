@@ -89,12 +89,12 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
       <div className="bg-white rounded-xl border border-[#cbd5e1] shadow-sm">
         <div className="p-5 border-b border-[#cbd5e1] flex justify-between items-center">
           <h4 className="text-[18px] font-semibold text-[#0f172a]">Consultas de Hoje</h4>
-          <button
-            type="button"
+          <Link
+            href="/consultas"
             className="text-[12px] font-semibold text-[#4648d4] hover:underline"
           >
             Ver todas
-          </button>
+          </Link>
         </div>
 
         <div className="p-4 flex flex-col gap-6">

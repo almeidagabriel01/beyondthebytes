@@ -47,13 +47,13 @@ export function StatusTimeline({ events }: StatusTimelineProps) {
     <div className="relative pl-6 space-y-6 before:absolute before:inset-y-0 before:left-[11px] before:w-px before:bg-[#e2e8f0]">
       {events.map((event, idx) => {
         const config = ACTION_CONFIG[event.action] ?? { label: event.action, icon: 'info' };
-        const isFirst = idx === 0;
+        const isLatest = idx === events.length - 1;
         return (
           <div key={event.id} className="relative">
             <div
-              className={`absolute -left-[28px] rounded-full ${isFirst ? 'bg-slate-100 p-1' : ''}`}
+              className={`absolute -left-[28px] rounded-full ${isLatest ? 'bg-slate-100 p-1' : ''}`}
             >
-              {isFirst ? (
+              {isLatest ? (
                 <div className="w-2.5 h-2.5 bg-[#4648d4] rounded-full ring-4 ring-[#4648d4]/20" />
               ) : (
                 <span className="material-symbols-outlined text-[16px] text-[#64748b] bg-white border border-[#e2e8f0] rounded-full p-0.5">
