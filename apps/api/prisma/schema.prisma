@@ -13,17 +13,17 @@ enum Role {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String         @default("")
-  passwordHash  String
-  role          Role           @default(STAFF)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                  String         @id @default(cuid())
+  email               String         @unique
+  name                String         @default("")
+  passwordHash        String
+  role                Role           @default(STAFF)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
   refreshTokens       RefreshToken[]
   patients            Patient[]
-  appointments        Appointment[] @relation("AppointmentUser")
-  createdAppointments Appointment[] @relation("AppointmentCreatedBy")
+  appointments        Appointment[]  @relation("AppointmentUser")
+  createdAppointments Appointment[]  @relation("AppointmentCreatedBy")
   clinicalNotes       ClinicalNote[]
 }
 
@@ -59,6 +59,11 @@ model Patient {
 
   @@index([fullName])
   @@index([email])
+  // Trigram GIN indexes back fuzzy ILIKE search on Patient.fullName / Patient.email.
+  // Created by migration 20260520211658_add_patient via raw SQL; modeled here so
+  // `prisma migrate dev` no longer emits spurious DROP INDEX drift.
+  @@index([fullName(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_patient_fullname_trgm")
+  @@index([email(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_patient_email_trgm")
 }
 
 enum AppointmentType {
@@ -108,14 +113,14 @@ model Appointment {
 }
 
 model AppointmentEvent {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   appointmentId String
   action        String
   fromStatus    String?
   toStatus      String?
   byUserId      String
   payload       Json?
-  createdAt     DateTime    @default(now())
+  createdAt     DateTime @default(now())
 
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
