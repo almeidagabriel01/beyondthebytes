@@ -19,8 +19,9 @@ export function CancelAppointmentModal({ appointment, onClose }: CancelAppointme
   const queryClient = useQueryClient();
   const [reason, setReason] = useState('');
 
-  // Derive the ISO date string (YYYY-MM-DD) for cache invalidation
-  const isoDate = appointment.startsAt.slice(0, 10);
+  const isoDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(
+    new Date(appointment.startsAt),
+  );
 
   const mutation = useMutation({
     mutationFn: () => cancelAppointment(appointment.id, { reason }),

@@ -286,8 +286,7 @@ export function PatientQuickRegisterModal({
             Voltar
           </button>
           <button
-            type="submit"
-            form=""
+            type="button"
             onClick={onSubmit}
             disabled={mutation.isPending}
             className="flex items-center gap-2 rounded-lg bg-[#4648d4] px-5 py-2 text-sm font-medium text-white hover:bg-[#3323cc] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm"

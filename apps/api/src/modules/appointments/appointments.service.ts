@@ -4,7 +4,7 @@ import {
   ConflictException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, AppointmentType, AppointmentStatus } from '@prisma/client';
 import { addMinutes } from 'date-fns';
 import { PrismaService } from '../../prisma/prisma.service';
 import { isValidSlot, isFutureSlot } from '@medschedule/shared';
@@ -105,7 +105,7 @@ export class AppointmentsService {
       where: {
         userId,
         ...dateFilter,
-        ...(status ? { status: status as never } : {}),
+        ...(status ? { status: status as AppointmentStatus } : {}),
       },
       include: {
         patient: { select: { id: true, fullName: true, cpf: true, phone: true } },
@@ -159,7 +159,7 @@ export class AppointmentsService {
             startsAt,
             endsAt,
             durationMinutes: dto.durationMinutes ?? 30,
-            type: dto.type as never,
+            type: dto.type as AppointmentType,
             insurance: dto.insurance,
             value: dto.value !== undefined ? dto.value : null,
             observations: dto.observations ?? null,
@@ -225,12 +225,12 @@ export class AppointmentsService {
     try {
       const appointment = await this.prisma.$transaction(async (tx) => {
         const updated = await tx.appointment.update({
-          where: { id },
+          where: { id, userId },
           data: {
             ...(startsAt !== undefined ? { startsAt } : {}),
             ...(endsAt !== undefined ? { endsAt } : {}),
             ...(dto.durationMinutes !== undefined ? { durationMinutes: dto.durationMinutes } : {}),
-            ...(dto.type !== undefined ? { type: dto.type as never } : {}),
+            ...(dto.type !== undefined ? { type: dto.type as AppointmentType } : {}),
             ...(dto.insurance !== undefined ? { insurance: dto.insurance } : {}),
             ...(dto.value !== undefined ? { value: dto.value } : {}),
             ...(dto.observations !== undefined ? { observations: dto.observations ?? null } : {}),
@@ -271,9 +271,9 @@ export class AppointmentsService {
 
     const appointment = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.appointment.update({
-        where: { id },
+        where: { id, userId },
         data: {
-          status: 'CANCELADO' as never,
+          status: AppointmentStatus.CANCELADO,
           cancelledAt: new Date(),
           cancelReason: dto.reason,
         },
@@ -297,7 +297,7 @@ export class AppointmentsService {
     return this._toResponse(appointment);
   }
 
-  _toResponse(appt: AppointmentWithPatient): AppointmentResponse {
+  private _toResponse(appt: AppointmentWithPatient): AppointmentResponse {
     return {
       id: appt.id,
       patientId: appt.patientId,
@@ -319,12 +319,15 @@ export class AppointmentsService {
     };
   }
 
-  _handleConstraintError(e: unknown): void {
+  private _handleConstraintError(e: unknown): void {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === 'P2010' || e.code === 'P2034') {
+      if (e.code === 'P2002' || e.code === 'P2010' || e.code === 'P2034') {
         const meta = e.meta as Record<string, unknown> | undefined;
         const message = String(meta?.message ?? meta?.details ?? '');
-        if (message.includes('no_overlap_per_user') || message.includes('no_overlap')) {
+        const target = Array.isArray(meta?.target)
+          ? (meta.target as string[]).join(',')
+          : String(meta?.target ?? '');
+        if (message.includes('no_overlap') || target.includes('no_overlap')) {
           throw new ConflictException({
             code: 'SLOT_CONFLICT',
             message: 'Horário já ocupado para este profissional',

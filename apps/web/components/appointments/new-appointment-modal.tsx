@@ -120,13 +120,15 @@ export function NewAppointmentModal({ defaultDate, onClose }: NewAppointmentModa
     },
   });
 
-  const selectedDate = watch('startsAt')
-    ? (watch('startsAt').split('T')[0] ?? defaultDate ?? todayIso())
-    : (defaultDate ?? todayIso());
   const [dateField, setDateField] = useState(defaultDate ?? todayIso());
   const durationMinutes = watch('durationMinutes') as number;
   const insurance = watch('insurance');
   const isParticular = insurance === 'Particular';
+
+  // Clear the selected slot whenever the date changes so a stale slot can't be submitted
+  useEffect(() => {
+    setValue('startsAt', '');
+  }, [dateField, setValue]);
 
   // ── Day appointments ────────────────────────────────────────────────────────
   const { data: dayAppointments = [] } = useQuery({
@@ -149,8 +151,9 @@ export function NewAppointmentModal({ defaultDate, onClose }: NewAppointmentModa
   // ── Mutation ────────────────────────────────────────────────────────────────
   const mutation = useMutation({
     mutationFn: (dto: CreateAppointment) => createAppointment(dto),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments-day', dateField] });
+    onSuccess: (_data, variables) => {
+      const submittedDate = variables.startsAt.slice(0, 10);
+      queryClient.invalidateQueries({ queryKey: ['appointments-day', submittedDate] });
       queryClient.invalidateQueries({ queryKey: ['month-summary'] });
       onClose();
     },
@@ -553,8 +556,7 @@ export function NewAppointmentModal({ defaultDate, onClose }: NewAppointmentModa
             Cancelar
           </button>
           <button
-            type="submit"
-            form=""
+            type="button"
             onClick={onSubmit}
             disabled={mutation.isPending}
             className="flex items-center gap-2 rounded-lg bg-[#4648d4] px-5 py-2 text-sm font-medium text-white hover:bg-[#3323cc] shadow-sm min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"

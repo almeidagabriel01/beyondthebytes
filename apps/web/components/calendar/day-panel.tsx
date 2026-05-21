@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AppointmentCard } from '@/components/appointments/appointment-card';
 import { fetchDayAppointments } from '@/lib/appointments';
+import { groupByPeriod } from '@/lib/group-by-period';
 import type { AppointmentResponse } from '@medschedule/shared';
 
 interface DayPanelProps {
@@ -14,33 +15,6 @@ interface DayPanelProps {
 
 function SkeletonCard() {
   return <div className="h-20 bg-[#f1f5f9] rounded-lg animate-pulse" />;
-}
-
-function groupByPeriod(appointments: AppointmentResponse[]): {
-  manha: AppointmentResponse[];
-  tarde: AppointmentResponse[];
-} {
-  const manha: AppointmentResponse[] = [];
-  const tarde: AppointmentResponse[] = [];
-
-  for (const appt of appointments) {
-    const d = new Date(appt.startsAt);
-    const brtHour = parseInt(
-      new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/Sao_Paulo',
-        hour: '2-digit',
-        hour12: false,
-      }).format(d),
-      10,
-    );
-    if (brtHour >= 7 && brtHour <= 11) {
-      manha.push(appt);
-    } else {
-      tarde.push(appt);
-    }
-  }
-
-  return { manha, tarde };
 }
 
 function formatDayLabel(date: Date): string {
@@ -65,7 +39,8 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
   const aguardandoCount = all.filter((a) => a.status === 'AGUARDANDO').length;
   const finalizadosCount = all.filter((a) => a.status === 'REALIZADO').length;
 
-  const { manha, tarde } = groupByPeriod(all);
+  const { manha, tarde: tardeRaw, noite } = groupByPeriod(all);
+  const tarde = [...tardeRaw, ...noite];
 
   return (
     <>
