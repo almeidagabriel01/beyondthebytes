@@ -83,7 +83,7 @@ export class AppointmentsService {
   }
 
   async list(query: ListAppointmentsQuery, userId: string): Promise<AppointmentResponse[]> {
-    const { date, from, to, status } = query;
+    const { date, from, to, status, order } = query;
 
     let dateFilter: Prisma.AppointmentWhereInput = {};
 
@@ -94,25 +94,41 @@ export class AppointmentsService {
     } else if (from || to) {
       dateFilter = {
         startsAt: {
-          ...(from ? { gte: new Date(from) } : {}),
-          ...(to ? { lte: new Date(to) } : {}),
+          ...(from ? { gte: this._parseRangeBoundary(from, 'start') } : {}),
+          ...(to ? { lte: this._parseRangeBoundary(to, 'end') } : {}),
         },
       };
     }
+
+    const statusFilter: Prisma.AppointmentWhereInput =
+      status && status.length > 0 ? { status: { in: status as AppointmentStatus[] } } : {};
 
     const appointments = await this.prisma.appointment.findMany({
       where: {
         userId,
         ...dateFilter,
-        ...(status ? { status: status as AppointmentStatus } : {}),
+        ...statusFilter,
       },
       include: {
         patient: { select: { id: true, fullName: true, cpf: true, phone: true } },
       },
-      orderBy: { startsAt: 'asc' },
+      orderBy: { startsAt: order ?? 'asc' },
     });
 
     return appointments.map((a) => this._toResponse(a));
+  }
+
+  /**
+   * Parses a from/to query value. Accepts either a full ISO datetime (used
+   * verbatim) or a YYYY-MM-DD date — the latter is expanded to start-of-day
+   * (00:00:00) or end-of-day (23:59:59) in America/Sao_Paulo (UTC-3).
+   */
+  private _parseRangeBoundary(value: string, kind: 'start' | 'end'): Date {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const suffix = kind === 'start' ? 'T00:00:00-03:00' : 'T23:59:59-03:00';
+      return new Date(value + suffix);
+    }
+    return new Date(value);
   }
 
   async findOne(id: string, userId: string): Promise<AppointmentResponse> {

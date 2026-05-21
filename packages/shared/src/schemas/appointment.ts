@@ -102,13 +102,39 @@ export const MonthSummaryItemSchema = z.object({
 });
 export type MonthSummaryItem = z.infer<typeof MonthSummaryItemSchema>;
 
+// Accepts either a full ISO datetime with offset OR a YYYY-MM-DD date.
+// YYYY-MM-DD is interpreted in America/Sao_Paulo at start-of-day (for `from`)
+// or end-of-day (for `to`) by the service.
+const DateOrIsoSchema = z
+  .string()
+  .refine((v) => /^\d{4}-\d{2}-\d{2}$/.test(v) || /^\d{4}-\d{2}-\d{2}T/.test(v), {
+    message: 'Expected YYYY-MM-DD or ISO 8601 datetime',
+  });
+
+// Accepts a single status, or a comma-separated list, or repeated query keys
+// (which Express parses as an array via the default `qs` parser).
+const StatusFilterSchema = z
+  .union([AppointmentStatusSchema, z.array(AppointmentStatusSchema), z.string()])
+  .transform((v): AppointmentStatus[] | undefined => {
+    if (Array.isArray(v)) return v;
+    if (typeof v !== 'string') return undefined;
+    const parts = v
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return parts as AppointmentStatus[];
+  })
+  .pipe(z.array(AppointmentStatusSchema).min(1))
+  .optional();
+
 export const ListAppointmentsQuerySchema = z.object({
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
-  from: z.string().datetime({ offset: true }).optional(),
-  to: z.string().datetime({ offset: true }).optional(),
-  status: AppointmentStatusSchema.optional(),
+  from: DateOrIsoSchema.optional(),
+  to: DateOrIsoSchema.optional(),
+  status: StatusFilterSchema,
+  order: z.enum(['asc', 'desc']).optional(),
 });
 export type ListAppointmentsQuery = z.infer<typeof ListAppointmentsQuerySchema>;

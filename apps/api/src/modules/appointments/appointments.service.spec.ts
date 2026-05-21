@@ -217,23 +217,51 @@ describe('AppointmentsService', () => {
       );
     });
 
-    it('queries with status filter', async () => {
+    it('queries with single-element status filter', async () => {
       mockPrisma.appointment.findMany.mockResolvedValue([dbAppointment]);
-      await service.list({ status: 'AGENDADO' }, 'user-1');
+      await service.list({ status: ['AGENDADO'] }, 'user-1');
       expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ status: 'AGENDADO' }),
+          where: expect.objectContaining({ status: { in: ['AGENDADO'] } }),
         }),
       );
     });
 
-    it('queries with from/to range filter', async () => {
+    it('queries with multi-status filter (REALIZADO + CANCELADO for /historico)', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([]);
+      await service.list({ status: ['REALIZADO', 'CANCELADO'] }, 'user-1');
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: { in: ['REALIZADO', 'CANCELADO'] } }),
+        }),
+      );
+    });
+
+    it('queries with from/to range filter (ISO datetime)', async () => {
       mockPrisma.appointment.findMany.mockResolvedValue([]);
       await service.list(
         { from: '2099-06-01T00:00:00-03:00', to: '2099-06-30T23:59:59-03:00' },
         'user-1',
       );
       expect(mockPrisma.appointment.findMany).toHaveBeenCalled();
+    });
+
+    it('expands YYYY-MM-DD from/to to BRT day boundaries', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([]);
+      await service.list({ from: '2099-06-01', to: '2099-06-30' }, 'user-1');
+      const call = mockPrisma.appointment.findMany.mock.calls[0][0] as {
+        where: { startsAt: { gte: Date; lte: Date } };
+      };
+      expect(call.where.startsAt.gte.toISOString()).toBe('2099-06-01T03:00:00.000Z');
+      expect(call.where.startsAt.lte.toISOString()).toBe('2099-07-01T02:59:59.000Z');
+    });
+
+    it('applies desc order when requested', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([]);
+      await service.list({ order: 'desc' }, 'user-1');
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { startsAt: 'desc' } }),
+      );
     });
   });
 

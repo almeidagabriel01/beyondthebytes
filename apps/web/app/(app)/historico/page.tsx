@@ -1,8 +1,13 @@
-export default function HistoricoPage() {
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Histórico</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Em construção — Fase 4.</p>
-    </div>
-  );
+import type { Metadata } from 'next';
+import { HistoricoClient } from './HistoricoClient';
+
+export const metadata: Metadata = { title: 'Histórico' };
+
+export default async function HistoricoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string }>;
+}) {
+  const { id } = await searchParams;
+  return <HistoricoClient selectedId={id ?? null} />;
 }

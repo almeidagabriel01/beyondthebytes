@@ -64,6 +64,25 @@ export async function fetchDayAppointments(
   return handleResponse<AppointmentResponse[]>(res);
 }
 
+export async function fetchHistoryAppointments(
+  from: string,
+  to: string,
+  statuses: AppointmentStatus[],
+  init?: RequestInit,
+): Promise<AppointmentResponse[]> {
+  const qs = new URLSearchParams({
+    from,
+    to,
+    status: statuses.join(','),
+    order: 'desc',
+  });
+  const res = await fetch(`${BASE}/appointments?${qs}`, {
+    credentials: 'include',
+    ...init,
+  });
+  return handleResponse<AppointmentResponse[]>(res);
+}
+
 export async function createAppointment(dto: CreateAppointment): Promise<AppointmentResponse> {
   const res = await fetch(`${BASE}/appointments`, {
     method: 'POST',
