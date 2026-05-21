@@ -8,6 +8,7 @@ import { clientEnv } from '@/lib/env';
 import type { MeResponse } from '@medschedule/shared';
 
 const navItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { href: '/calendario', label: 'Calendário', icon: 'calendar_month' },
   { href: '/agenda', label: 'Agenda do dia', icon: 'event_note' },
   { href: '/pacientes', label: 'Pacientes', icon: 'group' },
