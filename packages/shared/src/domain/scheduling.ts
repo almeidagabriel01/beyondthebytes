@@ -57,11 +57,13 @@ const TERMINAL_STATUSES = new Set(['CANCELADO', 'REALIZADO']);
  * Returns available start slots for `date` given existing appointments.
  * durationMinutes: desired duration (default 30). A slot is available only if
  * the entire window [slot, slot+duration) has no overlap with active appointments.
+ * Slots earlier than `now` are filtered out so past slots don't appear.
  */
 export function getOpenSlots(
   date: Date,
   existingAppointments: Array<{ startsAt: Date; endsAt: Date; status: string }>,
   durationMinutes = 30,
+  now: Date = new Date(),
 ): Date[] {
   const dateStr = new Intl.DateTimeFormat('en-CA', {
     timeZone: TIMEZONE,
@@ -85,6 +87,7 @@ export function getOpenSlots(
   const active = existingAppointments.filter((a) => !TERMINAL_STATUSES.has(a.status));
 
   return allSlots.filter((slot) => {
+    if (slot.getTime() < now.getTime()) return false;
     const slotEnd = new Date(slot.getTime() + durationMinutes * 60_000);
     return !active.some((a) => slot < a.endsAt && slotEnd > a.startsAt);
   });

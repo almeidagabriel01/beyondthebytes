@@ -102,6 +102,16 @@ describe('getOpenSlots', () => {
     // 10:00 onward with 60-min window should still be available (if free)
     expect(slots.some((s) => formatSlotTime(s) === '10:00')).toBe(true);
   });
+
+  it('filters out slots earlier than now on same day', () => {
+    const today = new Date('2026-05-21T13:00:00-03:00');
+    const fixedNow = new Date('2026-05-21T10:00:00-03:00');
+    const slots = getOpenSlots(today, [], 30, fixedNow);
+    // All slots should have startsAt >= 10:00 BRT
+    expect(slots.every((s) => s >= fixedNow)).toBe(true);
+    expect(slots.find((s) => formatSlotTime(s) === '10:00')).toBeDefined();
+    expect(slots.find((s) => formatSlotTime(s) === '09:30')).toBeUndefined();
+  });
 });
 
 describe('formatSlotTime', () => {

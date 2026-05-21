@@ -137,7 +137,6 @@ export function NewAppointmentModal({ defaultDate, onClose }: NewAppointmentModa
     staleTime: 30_000,
   });
 
-  const now = new Date();
   const openSlots = getOpenSlots(
     new Date(`${dateField}T12:00:00-03:00`),
     dayAppointments.map((a) => ({
@@ -146,7 +145,7 @@ export function NewAppointmentModal({ defaultDate, onClose }: NewAppointmentModa
       status: a.status,
     })),
     Number(durationMinutes),
-  ).filter((slot) => slot.getTime() > now.getTime());
+  );
 
   // ── Mutation ────────────────────────────────────────────────────────────────
   const mutation = useMutation({
