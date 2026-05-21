@@ -169,12 +169,12 @@ pnpm turbo build
 ## Testes
 
 ```bash
-pnpm -F @medschedule/api test            # 84 testes
+pnpm -F @medschedule/api test            # 95 testes
 pnpm -F @medschedule/api test:coverage   # threshold 90% (statements + functions)
 pnpm -F @medschedule/shared test         # 89 testes (domain puro)
 ```
 
-Cobertura atual nos serviços novos (Phase 6): DashboardService 100%, NotesService 100%. Cobertura agregada da API: 98% statements / 84% branches / 100% functions.
+Cobertura nos serviços principais: DashboardService 100%, NotesService 100%. Cobertura agregada da API ≥ 90% em statements e functions (threshold global do Jest).
 
 ---
 
