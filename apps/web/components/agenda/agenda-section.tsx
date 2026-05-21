@@ -17,18 +17,17 @@ export function AgendaSection({
   onCancelAppointment,
 }: AgendaSectionProps) {
   return (
-    <div className="bg-white rounded-xl border border-[#cbd5e1] flex flex-col h-full min-h-[400px]">
+    <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-[0_4px_12px_rgba(15,23,42,0.02)] flex flex-col h-full min-h-[400px]">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#cbd5e1] flex items-center gap-2 shrink-0">
-        <span
-          className={`material-symbols-outlined text-xl leading-none ${iconColor}`}
-          aria-hidden="true"
-        >
-          {icon}
-        </span>
-        <h3 className="text-sm font-semibold text-[#1b1b23]">{title}</h3>
-        <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#f1f5f9] text-[11px] font-semibold text-[#475569]">
-          {appointments.length}
+      <div className="p-4 border-b border-[#e2e8f0] bg-[#f8fafc]/50 flex justify-between items-center shrink-0">
+        <div className={`flex items-center gap-2 ${iconColor}`}>
+          <span className="material-symbols-outlined text-xl leading-none" aria-hidden="true">
+            {icon}
+          </span>
+          <h3 className="text-[18px] font-semibold leading-6">{title}</h3>
+        </div>
+        <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#e2e8f0] text-[12px] text-[#464554]">
+          {appointments.length} consultas
         </span>
       </div>
 
@@ -46,6 +45,7 @@ export function AgendaSection({
             <AppointmentCard
               key={appt.id}
               appointment={appt}
+              variant="agenda"
               {...(appt.status !== 'CANCELADO' && appt.status !== 'REALIZADO'
                 ? { onClick: () => onCancelAppointment(appt) }
                 : {})}
