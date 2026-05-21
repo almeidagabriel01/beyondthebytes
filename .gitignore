@@ -52,3 +52,12 @@ docs/
 
 # Playwright auth files
 apps/web/playwright/.auth/*.json
+
+# Temp download directories
+.tmp/
+
+# Compile artifacts emitted alongside TypeScript sources (should not be committed)
+packages/shared/src/**/*.js
+packages/shared/src/**/*.js.map
+apps/api/test/*.js
+apps/api/test/*.js.map
