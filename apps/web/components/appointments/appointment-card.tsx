@@ -140,7 +140,6 @@ export function AppointmentCard({
       ' border border-[#e2e8f0] hover:shadow-[0_4px_12px_rgba(15,23,42,0.05)] cursor-pointer';
   }
 
-  // Time column color
   const timeColClass = isEmAtendimento
     ? 'text-[#4648d4]'
     : isRealizado
@@ -149,20 +148,16 @@ export function AppointmentCard({
         ? 'text-[#94a3b8]'
         : 'text-[#0f172a]';
 
-  // Time font weight — EM_ATENDIMENTO is bold
   const timeFontClass = isEmAtendimento ? 'font-bold' : 'font-semibold';
 
-  // Divider color
   const dividerColor = isEmAtendimento
     ? 'bg-[#4648d4]/20'
     : isRealizado || isCancelled
       ? 'bg-[#cbd5e1]'
       : 'bg-[#e2e8f0]';
 
-  // Name color + strikethrough for cancelled
   const nameClass = isCancelled ? 'text-[#94a3b8] line-through' : 'text-[#0f172a]';
 
-  // Type+insurance combined label
   const typeInsuranceText = appt.insurance
     ? `${APPOINTMENT_TYPE_LABELS[appt.type]} • ${appt.insurance}`
     : APPOINTMENT_TYPE_LABELS[appt.type];
