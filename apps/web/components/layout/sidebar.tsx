@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { clientEnv } from '@/lib/env';
-import type { MeResponse } from '@medschedule/shared';
+import { fetchMe, logout } from '@/lib/auth';
+import { UserAvatar } from '@/components/shared/user-avatar';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -17,22 +19,10 @@ const navItems = [
   { href: '/configuracoes', label: 'Configurações', icon: 'settings' },
 ] as const;
 
-async function fetchMe(): Promise<MeResponse> {
-  const res = await fetch(`${clientEnv.NEXT_PUBLIC_API_URL}/auth/me`, {
-    credentials: 'include',
-  });
-  if (res.status === 401) {
-    // Session expired / cookie invalid — bounce to login. Middleware can't catch
-    // XHR 401s, so we force the redirect here.
-    if (typeof window !== 'undefined') {
-      const redirect = encodeURIComponent(window.location.pathname);
-      window.location.href = `/login?redirect=${redirect}`;
-    }
-    throw new Error('Session expired');
-  }
-  if (!res.ok) throw new Error('Not authenticated');
-  return res.json() as Promise<MeResponse>;
-}
+const ROLE_LABELS: Record<'ADMIN' | 'STAFF', string> = {
+  ADMIN: 'Administrador',
+  STAFF: 'Equipe',
+};
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -47,24 +37,56 @@ export default function Sidebar() {
   });
 
   const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`${clientEnv.NEXT_PUBLIC_API_URL}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!res.ok && res.status !== 204) {
-        throw new Error('Logout failed');
-      }
-    },
-    onSuccess: () => {
-      queryClient.clear();
-      router.push('/login');
-    },
-    onError: () => {
+    mutationFn: logout,
+    onSettled: () => {
       queryClient.clear();
       router.push('/login');
     },
   });
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{
+    left: number;
+    bottom: number;
+    width: number;
+  } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Position the portaled menu directly ABOVE the user button (drops up).
+  useLayoutEffect(() => {
+    if (!menuOpen || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setMenuPosition({
+      left: rect.left,
+      bottom: window.innerHeight - rect.top + 8,
+      width: rect.width,
+    });
+  }, [menuOpen]);
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  const handleClickOutside = useCallback((e: MouseEvent) => {
+    const target = e.target as Node;
+    if (triggerRef.current?.contains(target)) return;
+    if (menuRef.current?.contains(target)) return;
+    setMenuOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKey);
+    window.addEventListener('resize', closeMenu);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKey);
+      window.removeEventListener('resize', closeMenu);
+    };
+  }, [menuOpen, handleClickOutside, closeMenu]);
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar py-6">
@@ -117,32 +139,88 @@ export default function Sidebar() {
       </nav>
 
       {/* User section */}
-      <div className="mt-auto px-4 pt-4 border-t border-[#1e293b] space-y-0.5">
+      <div className="mt-auto px-4 pt-4 border-t border-[#1e293b]">
         <button
+          ref={triggerRef}
           type="button"
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-slate-400 transition-all hover:bg-[#1e293b] hover:text-white"
+          aria-label="Menu do usuário"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((o) => !o)}
+          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm text-slate-400 transition-all hover:bg-[#1e293b] hover:text-white"
         >
-          <span className="material-symbols-outlined text-[20px] leading-none" aria-hidden="true">
-            account_circle
-          </span>
+          <UserAvatar name={me?.name} avatarUrl={me?.avatarUrl ?? null} size="sm" />
           <span className="flex-1 truncate text-left">{me?.name || me?.email || '...'}</span>
           <span className="material-symbols-outlined text-sm leading-none" aria-hidden="true">
             unfold_more
           </span>
         </button>
-        <button
-          type="button"
-          onClick={() => logoutMutation.mutate()}
-          disabled={logoutMutation.isPending}
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-slate-400 transition-all hover:bg-[#1e293b] hover:text-white disabled:opacity-60"
-          aria-label="Sair da conta"
-        >
-          <span className="material-symbols-outlined text-[20px] leading-none" aria-hidden="true">
-            logout
-          </span>
-          <span>{logoutMutation.isPending ? 'Saindo...' : 'Sair'}</span>
-        </button>
       </div>
+
+      {menuOpen &&
+        menuPosition &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            style={{
+              left: menuPosition.left,
+              bottom: menuPosition.bottom,
+              width: menuPosition.width,
+            }}
+            className="fixed z-[60] rounded-xl border border-[#e2e8f0] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.15)]"
+          >
+            <div className="flex items-center gap-3 px-4 py-3">
+              <UserAvatar name={me?.name} avatarUrl={me?.avatarUrl ?? null} size="sm" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold text-[#0f172a]">
+                  {me?.name || 'Usuário'}
+                </p>
+                <p className="truncate text-[12px] text-[#64748b]">{me?.email ?? '...'}</p>
+                {me?.role && (
+                  <span className="mt-1 inline-block rounded-full bg-[#e1e0ff] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#4648d4]">
+                    {ROLE_LABELS[me.role]}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="border-t border-[#e2e8f0]" />
+            <Link
+              href="/configuracoes"
+              role="menuitem"
+              onClick={closeMenu}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#0f172a] hover:bg-[#f8fafc] transition-colors"
+            >
+              <span
+                className="material-symbols-outlined text-[18px] leading-none"
+                aria-hidden="true"
+              >
+                settings
+              </span>
+              Configurações
+            </Link>
+            <button
+              type="button"
+              role="menuitem"
+              disabled={logoutMutation.isPending}
+              onClick={() => {
+                closeMenu();
+                logoutMutation.mutate();
+              }}
+              className="flex w-full items-center gap-2.5 rounded-b-xl px-4 py-2.5 text-left text-[13px] font-medium text-[#ba1a1a] hover:bg-[#fff1f0] transition-colors disabled:opacity-60"
+            >
+              <span
+                className="material-symbols-outlined text-[18px] leading-none"
+                aria-hidden="true"
+              >
+                logout
+              </span>
+              {logoutMutation.isPending ? 'Saindo...' : 'Sair'}
+            </button>
+          </div>,
+          document.body,
+        )}
     </aside>
   );
 }
