@@ -1,6 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { format, addDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 // ── Calendário golden path ────────────────────────────────────────────────────
 
@@ -76,29 +74,27 @@ test.describe('Agenda Diária', () => {
   });
 
   test('clicking next day button advances the date', async ({ page }) => {
-    // Capture the current date header text
-    const header = page.locator('h2').filter({ hasText: /,/ }).first();
-    const before = await header.textContent();
+    // The date is shown in the TopBar nav button (aria-label="Ir para hoje")
+    const dateButton = page.getByRole('button', { name: 'Ir para hoje' });
+    const before = await dateButton.textContent();
 
     await page.getByRole('button', { name: 'Próximo dia' }).click();
 
-    const after = await header.textContent();
+    const after = await dateButton.textContent();
     expect(after).not.toBe(before);
   });
 
-  test('"Hoje" button returns to today after advancing', async ({ page }) => {
-    const today = new Date();
-    const todayLabel = format(today, "EEEE, d 'de' MMMM", { locale: ptBR });
-    const todayLabelCapitalized = todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
+  test('"Ir para hoje" button returns to today after advancing', async ({ page }) => {
+    const dateButton = page.getByRole('button', { name: 'Ir para hoje' });
 
     // Advance one day
     await page.getByRole('button', { name: 'Próximo dia' }).click();
 
-    // Return to today
-    await page.getByRole('button', { name: 'Hoje' }).click();
+    // Return to today via the center date button
+    await dateButton.click();
 
-    const header = page.locator('h2').filter({ hasText: /,/ }).first();
-    await expect(header).toHaveText(todayLabelCapitalized);
+    // After returning, the button text should start with "Hoje,"
+    await expect(dateButton).toContainText('Hoje,');
   });
 
   test('"Novo agendamento" button opens NewAppointmentModal', async ({ page }) => {

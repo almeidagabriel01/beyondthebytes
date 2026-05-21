@@ -15,7 +15,7 @@ export function AgendaClient() {
   const [cancelTarget, setCancelTarget] = useState<AppointmentResponse | null>(null);
 
   const isoDate = format(date, 'yyyy-MM-dd');
-  const { setRightSlot, setOnNewAppointment } = useTopBarSlot();
+  const { setRightSlot } = useTopBarSlot();
 
   function formatAgendaDate(d: Date): string {
     const day = format(d, 'd', { locale: ptBR });
@@ -29,45 +29,58 @@ export function AgendaClient() {
 
   const dateLabel = formatAgendaDate(date);
 
-  // Inject date navigation into TopBar right slot
+  // Inject date navigation + new appointment button into TopBar right slot
   useEffect(() => {
     setRightSlot(
-      <div className="flex items-center bg-[#f8fafc] rounded-lg p-1 border border-[#cbd5e1]/60">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center bg-[#f8fafc] rounded-lg p-1 border border-[#cbd5e1]/60">
+          <button
+            type="button"
+            aria-label="Dia anterior"
+            onClick={() => setDate((d) => subDays(d, 1))}
+            className="p-2 text-[#475569] hover:bg-[#e2e8f0] rounded-md transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px] leading-none">chevron_left</span>
+          </button>
+          <button
+            type="button"
+            aria-label="Ir para hoje"
+            onClick={() => setDate(new Date())}
+            className="px-4 py-2 text-[14px] font-medium text-[#0f172a] flex items-center gap-2 hover:bg-[#e2e8f0] rounded-md transition-colors"
+          >
+            {dateLabel}
+            <span className="material-symbols-outlined text-[18px] leading-none text-[#475569]">
+              calendar_today
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-label="Próximo dia"
+            onClick={() => setDate((d) => addDays(d, 1))}
+            className="p-2 text-[#475569] hover:bg-[#e2e8f0] rounded-md transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px] leading-none">
+              chevron_right
+            </span>
+          </button>
+        </div>
         <button
           type="button"
-          aria-label="Dia anterior"
-          onClick={() => setDate((d) => subDays(d, 1))}
-          className="p-2 text-[#475569] hover:bg-[#e2e8f0] rounded-md transition-colors"
+          onClick={() => setShowNewModal(true)}
+          className="hidden md:flex items-center gap-2 rounded-lg bg-[#4648d4] px-4 py-2 text-xs font-semibold tracking-wider text-white shadow-sm transition-colors hover:bg-[#3537b3]"
         >
-          <span className="material-symbols-outlined text-[20px] leading-none">chevron_left</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setDate(new Date())}
-          className="px-4 py-2 text-[14px] font-medium text-[#0f172a] flex items-center gap-2 hover:bg-[#e2e8f0] rounded-md transition-colors"
-        >
-          {dateLabel}
-          <span className="material-symbols-outlined text-[18px] leading-none text-[#475569]">
-            calendar_today
+          <span className="material-symbols-outlined text-base leading-none" aria-hidden="true">
+            add
           </span>
-        </button>
-        <button
-          type="button"
-          aria-label="Próximo dia"
-          onClick={() => setDate((d) => addDays(d, 1))}
-          className="p-2 text-[#475569] hover:bg-[#e2e8f0] rounded-md transition-colors"
-        >
-          <span className="material-symbols-outlined text-[20px] leading-none">chevron_right</span>
+          Novo agendamento
         </button>
       </div>,
     );
-    setOnNewAppointment(() => setShowNewModal(true));
 
     return () => {
       setRightSlot(null);
-      setOnNewAppointment(null);
     };
-  }, [dateLabel, setRightSlot, setOnNewAppointment, setDate, setShowNewModal]);
+  }, [dateLabel, setRightSlot, setDate, setShowNewModal]);
 
   return (
     <>

@@ -197,6 +197,46 @@ describe('AppointmentsService', () => {
     });
   });
 
+  // ── list ───────────────────────────────────────────────────────────────────
+
+  describe('list', () => {
+    it('returns empty array when no appointments', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([]);
+      const result = await service.list({}, 'user-1');
+      expect(result).toEqual([]);
+    });
+
+    it('queries with date filter', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([dbAppointment]);
+      const result = await service.list({ date: '2099-06-15' }, 'user-1');
+      expect(result).toHaveLength(1);
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ userId: 'user-1' }),
+        }),
+      );
+    });
+
+    it('queries with status filter', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([dbAppointment]);
+      await service.list({ status: 'AGENDADO' }, 'user-1');
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'AGENDADO' }),
+        }),
+      );
+    });
+
+    it('queries with from/to range filter', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([]);
+      await service.list(
+        { from: '2099-06-01T00:00:00-03:00', to: '2099-06-30T23:59:59-03:00' },
+        'user-1',
+      );
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalled();
+    });
+  });
+
   // ── update ─────────────────────────────────────────────────────────────────
 
   describe('update', () => {
@@ -215,7 +255,7 @@ describe('AppointmentsService', () => {
       });
     });
 
-    it('returns updated AppointmentResponse on happy path', async () => {
+    it('returns updated AppointmentResponse on happy path (no startsAt change)', async () => {
       mockPrisma.appointment.findFirst.mockResolvedValue(dbAppointment);
       const updatedAppt = { ...dbAppointment, insurance: 'UNIMED' };
       mockPrisma.appointment.update.mockResolvedValue(updatedAppt);
@@ -225,6 +265,59 @@ describe('AppointmentsService', () => {
 
       expect(result.insurance).toBe('UNIMED');
       expect(result.id).toBe('appt-1');
+    });
+
+    it('throws INVALID_SLOT when new startsAt has invalid minutes (09:15)', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue(dbAppointment);
+
+      await expect(service.update('appt-1', { startsAt: INVALID_SLOT }, 'user-1')).rejects.toThrow(
+        UnprocessableEntityException,
+      );
+    });
+
+    it('throws PAST_SLOT when new startsAt is in the past', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue(dbAppointment);
+
+      await expect(
+        service.update('appt-1', { startsAt: PAST_VALID_SLOT }, 'user-1'),
+      ).rejects.toThrow(UnprocessableEntityException);
+    });
+
+    it('recomputes endsAt when only durationMinutes changes', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue(dbAppointment);
+      const updatedAppt = { ...dbAppointment, durationMinutes: 60 };
+      mockPrisma.appointment.update.mockResolvedValue(updatedAppt);
+      mockPrisma.appointmentEvent.create.mockResolvedValue({});
+
+      const result = await service.update('appt-1', { durationMinutes: 60 }, 'user-1');
+
+      expect(result.durationMinutes).toBe(60);
+    });
+
+    it('throws ConflictException on exclusion constraint violation in update (P2010)', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue(dbAppointment);
+      mockPrisma.appointment.update.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Exclusion constraint violated', {
+          code: 'P2010',
+          clientVersion: '6.0.0',
+          meta: {
+            message: 'conflicting key value violates exclusion constraint "no_overlap_per_user"',
+          },
+        }),
+      );
+      mockPrisma.appointmentEvent.create.mockResolvedValue({});
+
+      await expect(
+        service.update('appt-1', { startsAt: FUTURE_VALID_SLOT }, 'user-1'),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('throws NotFoundException when appointment does not exist', async () => {
+      mockPrisma.appointment.findFirst.mockResolvedValue(null);
+
+      await expect(service.update('appt-99', { insurance: 'UNIMED' }, 'user-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
