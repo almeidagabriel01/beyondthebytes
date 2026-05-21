@@ -2,8 +2,6 @@
 
 Sistema SaaS de agenda médica para clínicas pequenas — centraliza agendamentos, pacientes, status de consulta, observações clínicas e visão operacional do dia. Substitui processos manuais de papel/planilha/agenda física.
 
-Projeto de avaliação técnica. Spec original em [`docs/9683a7ac-bb22-4df9-a88a-391a6ff5fb90_Desafio_MedSchedule_.pdf`](./docs).
-
 ---
 
 ## Stack
