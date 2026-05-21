@@ -26,25 +26,10 @@ import {
   transitionAppointment,
 } from '@/lib/appointments';
 import { fetchAppointmentNotes, createAppointmentNote, patchClinicalNote } from '@/lib/notes';
-
-const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
-  CONSULTA: 'Consulta',
-  RETORNO: 'Retorno',
-  AVALIACAO: 'Avaliação',
-  PROCEDIMENTO: 'Procedimento',
-};
+import { getInitials } from '@/lib/utils';
+import { APPOINTMENT_TYPE_LABELS } from '@/lib/appointment-status';
 
 const EMPTY_DOC: TiptapDoc = { type: 'doc', content: [{ type: 'paragraph' }] };
-
-function patientInitials(name: string): string {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase();
-}
 
 function formatDateTime(startsAt: string, endsAt: string): string {
   const start = new Date(startsAt);
@@ -346,7 +331,7 @@ function DrawerBody({ appointmentId, onClose }: Omit<DrawerBodyProps, 'status'>)
             </div>
             <div className="flex items-start gap-5">
               <div className="w-14 h-14 rounded-full bg-[#e1e0ff] text-[#4648d4] flex items-center justify-center text-[18px] font-bold shrink-0">
-                {patientInitials(appt.patient.fullName)}
+                {getInitials(appt.patient.fullName)}
               </div>
               <div className="flex-1 min-w-0 pr-24">
                 <h3 className="text-[20px] font-semibold text-[#0f172a] leading-tight truncate">
@@ -376,7 +361,9 @@ function DrawerBody({ appointmentId, onClose }: Omit<DrawerBodyProps, 'status'>)
                 <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wide mb-1">
                   Tipo de Consulta
                 </p>
-                <p className="text-[13px] font-medium text-[#0f172a]">{TYPE_LABELS[appt.type]}</p>
+                <p className="text-[13px] font-medium text-[#0f172a]">
+                  {APPOINTMENT_TYPE_LABELS[appt.type]}
+                </p>
               </div>
 
               <div>

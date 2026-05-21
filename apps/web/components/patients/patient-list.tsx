@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PatientsListResponse, PatientResponse } from '@medschedule/shared';
 import { clientEnv } from '@/lib/env';
-import { cn } from '@/lib/utils';
+import { cn, getInitials } from '@/lib/utils';
 import { PatientFormModal } from './patient-form-modal';
 import { DeletePatientConfirm } from './delete-patient-confirm';
 
@@ -48,16 +48,9 @@ function SkeletonRow() {
 }
 
 function PatientAvatar({ name }: { name: string }) {
-  const initials = name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase();
   return (
     <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-semibold shrink-0">
-      {initials}
+      {getInitials(name)}
     </div>
   );
 }

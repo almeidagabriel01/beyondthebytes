@@ -3,24 +3,8 @@
 import type { AppointmentResponse } from '@medschedule/shared';
 import { formatSlotTime } from '@medschedule/shared';
 import { StatusBadge } from '@/components/shared/status-badge';
-import { cn } from '@/lib/utils';
-
-const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
-  CONSULTA: 'Consulta',
-  RETORNO: 'Retorno',
-  AVALIACAO: 'Avaliação',
-  PROCEDIMENTO: 'Procedimento',
-};
-
-function initials(name: string): string {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase();
-}
+import { cn, getInitials } from '@/lib/utils';
+import { APPOINTMENT_TYPE_LABELS } from '@/lib/appointment-status';
 
 interface Props {
   appointment: AppointmentResponse;
@@ -47,14 +31,14 @@ export function AppointmentListCard({ appointment: a, selected, anySelected, onC
       )}
       <div className={cn('flex items-center gap-4 min-w-0', selected && 'pl-2')}>
         <div className="w-12 h-12 rounded-full bg-[#e1e0ff] text-[#4648d4] flex items-center justify-center text-[15px] font-bold shrink-0">
-          {initials(a.patient.fullName)}
+          {getInitials(a.patient.fullName)}
         </div>
         <div className="min-w-0">
           <h4 className="text-[15px] font-semibold text-[#0f172a] truncate">
             {a.patient.fullName}
           </h4>
           <p className="text-[13px] text-[#475569] truncate">
-            {TYPE_LABELS[a.type]}
+            {APPOINTMENT_TYPE_LABELS[a.type]}
             {a.insurance ? ` • ${a.insurance}` : ''}
           </p>
         </div>

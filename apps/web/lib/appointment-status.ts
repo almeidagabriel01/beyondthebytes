@@ -1,5 +1,12 @@
 import type { AppointmentResponse } from '@medschedule/shared';
 
+export const APPOINTMENT_TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
+  CONSULTA: 'Consulta',
+  RETORNO: 'Retorno',
+  AVALIACAO: 'Avaliação',
+  PROCEDIMENTO: 'Procedimento',
+};
+
 /**
  * "Vencido" is a derived visual state (not a real status). It marks
  * appointments that are still in a non-terminal, non-active status whose

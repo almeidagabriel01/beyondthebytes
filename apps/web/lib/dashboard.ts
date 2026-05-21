@@ -3,18 +3,11 @@ import type {
   DashboardKpisResponse,
   KpisPeriod,
 } from '@medschedule/shared';
-import { clientEnv } from '@/lib/env';
-
-const BASE = clientEnv.NEXT_PUBLIC_API_URL;
-
-async function handle<T>(res: Response): Promise<T> {
-  if (res.ok) return res.json() as Promise<T>;
-  throw Object.assign(new Error(`Erro ${res.status}`), { status: res.status });
-}
+import { API_BASE, handleResponse } from '@/lib/api-client';
 
 export async function fetchDashboardToday(init?: RequestInit): Promise<DashboardTodayResponse> {
-  const res = await fetch(`${BASE}/dashboard/today`, { credentials: 'include', ...init });
-  return handle<DashboardTodayResponse>(res);
+  const res = await fetch(`${API_BASE}/dashboard/today`, { credentials: 'include', ...init });
+  return handleResponse<DashboardTodayResponse>(res);
 }
 
 export async function fetchDashboardKpis(
@@ -22,6 +15,6 @@ export async function fetchDashboardKpis(
   init?: RequestInit,
 ): Promise<DashboardKpisResponse> {
   const qs = new URLSearchParams({ period });
-  const res = await fetch(`${BASE}/dashboard/kpis?${qs}`, { credentials: 'include', ...init });
-  return handle<DashboardKpisResponse>(res);
+  const res = await fetch(`${API_BASE}/dashboard/kpis?${qs}`, { credentials: 'include', ...init });
+  return handleResponse<DashboardKpisResponse>(res);
 }

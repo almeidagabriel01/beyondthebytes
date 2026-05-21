@@ -4,14 +4,7 @@ import type { ReactNode } from 'react';
 import { formatSlotTime } from '@medschedule/shared';
 import type { AppointmentResponse } from '@medschedule/shared';
 import { StatusBadge } from '@/components/shared/status-badge';
-import { isVencido } from '@/lib/appointment-status';
-
-const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
-  CONSULTA: 'Consulta',
-  RETORNO: 'Retorno',
-  AVALIACAO: 'Avaliação',
-  PROCEDIMENTO: 'Procedimento',
-};
+import { isVencido, APPOINTMENT_TYPE_LABELS } from '@/lib/appointment-status';
 
 interface AppointmentCardProps {
   appointment: AppointmentResponse;
@@ -119,7 +112,7 @@ export function AppointmentCard({
               ) : null}
             </div>
           </div>
-          <span className="text-[12px] text-[#64748b]">{TYPE_LABELS[appt.type]}</span>
+          <span className="text-[12px] text-[#64748b]">{APPOINTMENT_TYPE_LABELS[appt.type]}</span>
           {appt.insurance && (
             <span className="inline-flex self-start bg-[#e2e8f0] px-2 py-1 rounded text-[11px] text-[#475569]">
               {appt.insurance}
@@ -171,8 +164,8 @@ export function AppointmentCard({
 
   // Type+insurance combined label
   const typeInsuranceText = appt.insurance
-    ? `${TYPE_LABELS[appt.type]} • ${appt.insurance}`
-    : TYPE_LABELS[appt.type];
+    ? `${APPOINTMENT_TYPE_LABELS[appt.type]} • ${appt.insurance}`
+    : APPOINTMENT_TYPE_LABELS[appt.type];
 
   const typeInsuranceColor = isCancelled ? 'text-[#94a3b8]' : 'text-[#475569]';
 

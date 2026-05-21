@@ -7,27 +7,7 @@ import type {
   AppointmentStatus,
   MonthSummaryItem,
 } from '@medschedule/shared';
-import { clientEnv } from '@/lib/env';
-
-const BASE = clientEnv.NEXT_PUBLIC_API_URL;
-
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (res.ok) return res.json() as Promise<T>;
-  let body: unknown;
-  try {
-    body = (await res.json()) as unknown;
-  } catch {
-    body = await res.text();
-  }
-  const message =
-    body !== null &&
-    typeof body === 'object' &&
-    'message' in body &&
-    typeof (body as Record<string, unknown>).message === 'string'
-      ? (body as { message: string }).message
-      : `Erro ${res.status}`;
-  throw Object.assign(new Error(message), { status: res.status, body });
-}
+import { API_BASE, handleResponse } from '@/lib/api-client';
 
 function pad(n: number): string {
   return String(n).padStart(2, '0');
@@ -45,7 +25,7 @@ export async function fetchMonthSummary(
   const from = toYMD(new Date(year, month - 1, 1));
   const to = toYMD(new Date(year, month, 0));
   const qs = new URLSearchParams({ from, to });
-  const res = await fetch(`${BASE}/appointments/month-summary?${qs}`, {
+  const res = await fetch(`${API_BASE}/appointments/month-summary?${qs}`, {
     credentials: 'include',
     ...init,
   });
@@ -57,7 +37,7 @@ export async function fetchDayAppointments(
   init?: RequestInit,
 ): Promise<AppointmentResponse[]> {
   const qs = new URLSearchParams({ date });
-  const res = await fetch(`${BASE}/appointments?${qs}`, {
+  const res = await fetch(`${API_BASE}/appointments?${qs}`, {
     credentials: 'include',
     ...init,
   });
@@ -76,7 +56,7 @@ export async function fetchHistoryAppointments(
     status: statuses.join(','),
     order: 'desc',
   });
-  const res = await fetch(`${BASE}/appointments?${qs}`, {
+  const res = await fetch(`${API_BASE}/appointments?${qs}`, {
     credentials: 'include',
     ...init,
   });
@@ -84,7 +64,7 @@ export async function fetchHistoryAppointments(
 }
 
 export async function createAppointment(dto: CreateAppointment): Promise<AppointmentResponse> {
-  const res = await fetch(`${BASE}/appointments`, {
+  const res = await fetch(`${API_BASE}/appointments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -97,7 +77,7 @@ export async function updateAppointment(
   id: string,
   dto: UpdateAppointment,
 ): Promise<AppointmentResponse> {
-  const res = await fetch(`${BASE}/appointments/${id}`, {
+  const res = await fetch(`${API_BASE}/appointments/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -107,12 +87,12 @@ export async function updateAppointment(
 }
 
 export async function fetchAppointment(id: string): Promise<AppointmentResponse> {
-  const res = await fetch(`${BASE}/appointments/${id}`, { credentials: 'include' });
+  const res = await fetch(`${API_BASE}/appointments/${id}`, { credentials: 'include' });
   return handleResponse<AppointmentResponse>(res);
 }
 
 export async function fetchAppointmentEvents(id: string): Promise<AppointmentEventResponse[]> {
-  const res = await fetch(`${BASE}/appointments/${id}/events`, { credentials: 'include' });
+  const res = await fetch(`${API_BASE}/appointments/${id}/events`, { credentials: 'include' });
   return handleResponse<AppointmentEventResponse[]>(res);
 }
 
@@ -120,7 +100,7 @@ export async function cancelAppointment(
   id: string,
   dto: CancelAppointment,
 ): Promise<AppointmentResponse> {
-  const res = await fetch(`${BASE}/appointments/${id}/cancel`, {
+  const res = await fetch(`${API_BASE}/appointments/${id}/cancel`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -134,7 +114,7 @@ export async function transitionAppointment(
   to: AppointmentStatus,
   reason?: string,
 ): Promise<{ status: AppointmentStatus }> {
-  const res = await fetch(`${BASE}/appointments/${id}/transition`, {
+  const res = await fetch(`${API_BASE}/appointments/${id}/transition`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
