@@ -15,6 +15,7 @@ import { StatusTimeline } from '@/components/appointments/status-timeline';
 import { StatusActions } from '@/components/appointments/status-actions';
 import { CancelAppointmentModal } from '@/components/appointments/cancel-appointment-modal';
 import { EditAppointmentModal } from '@/components/appointments/edit-appointment-modal';
+import { NotesModal } from '@/components/notes/notes-modal';
 import { transitionAppointment } from '@/lib/appointments';
 
 const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
@@ -56,6 +57,7 @@ export function AppointmentDetailClient({
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const [showCancel, setShowCancel] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
 
   const handleTransition = useCallback(
     async (to: AppointmentStatus) => {
@@ -179,6 +181,33 @@ export function AppointmentDetailClient({
             )}
           </section>
 
+          {appt.status === 'REALIZADO' && (
+            <section className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm p-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-[16px] font-semibold text-[#0f172a] flex items-center gap-2">
+                  <span
+                    className="material-symbols-outlined text-[#4648d4] text-[20px]"
+                    aria-hidden="true"
+                  >
+                    edit_note
+                  </span>
+                  Observações Clínicas
+                </h3>
+                <p className="mt-1 text-[13px] text-[#64748b]">
+                  Registre o atendimento. As versões são preservadas.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNotes(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4648d4] text-white text-[13px] font-semibold shadow-sm hover:bg-[#3a3cb8]"
+              >
+                <span className="material-symbols-outlined text-[18px]">stylus_note</span>
+                Abrir editor
+              </button>
+            </section>
+          )}
+
           {/* Event Timeline */}
           <section className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm p-6">
             <h3 className="text-[16px] font-semibold text-[#0f172a] mb-5 flex items-center gap-2">
@@ -228,6 +257,10 @@ export function AppointmentDetailClient({
             router.refresh();
           }}
         />
+      )}
+
+      {showNotes && (
+        <NotesModal appointmentId={appt.id} open={showNotes} onClose={() => setShowNotes(false)} />
       )}
     </>
   );
