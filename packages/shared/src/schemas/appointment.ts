@@ -43,6 +43,25 @@ export const CancelAppointmentSchema = z.object({
 });
 export type CancelAppointment = z.infer<typeof CancelAppointmentSchema>;
 
+export const TransitionAppointmentSchema = z.object({
+  to: AppointmentStatusSchema,
+  reason: z.string().min(1).max(200).optional(),
+});
+export type TransitionAppointment = z.infer<typeof TransitionAppointmentSchema>;
+
+export const AppointmentEventResponseSchema = z.object({
+  id: z.string(),
+  appointmentId: z.string(),
+  action: z.string(),
+  fromStatus: z.string().nullable(),
+  toStatus: z.string().nullable(),
+  byUserId: z.string(),
+  byUserName: z.string(),
+  payload: z.unknown().nullable(),
+  createdAt: z.string(),
+});
+export type AppointmentEventResponse = z.infer<typeof AppointmentEventResponseSchema>;
+
 export const MonthSummaryQuerySchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
