@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { TopBarSlotProvider } from '@/context/topbar-slot';
 import Sidebar from './sidebar';
 import TopBar from './topbar';
+import { BottomNav } from './bottom-nav';
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -14,6 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <TopBar />
           <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
+        <BottomNav />
       </div>
     </TopBarSlotProvider>
   );
