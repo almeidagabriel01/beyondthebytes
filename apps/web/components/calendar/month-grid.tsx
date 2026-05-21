@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import {
   startOfMonth,
   endOfMonth,
@@ -9,6 +12,7 @@ import {
 } from 'date-fns';
 import type { MonthSummaryItem } from '@medschedule/shared';
 import { DayCell } from './day-cell';
+import { DayPopover, type DayPopoverAnchor } from './day-popover';
 
 const WEEKDAY_HEADERS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -17,6 +21,11 @@ interface MonthGridProps {
   selectedDay: Date;
   summary: MonthSummaryItem[];
   onDaySelect: (d: Date) => void;
+}
+
+interface PopoverState {
+  date: Date;
+  anchor: DayPopoverAnchor;
 }
 
 export function MonthGrid({ month, selectedDay, summary, onDaySelect }: MonthGridProps) {
@@ -33,6 +42,19 @@ export function MonthGrid({ month, selectedDay, summary, onDaySelect }: MonthGri
   for (const item of summary) {
     summaryMap.set(item.date, item);
   }
+
+  const [popover, setPopover] = useState<PopoverState | null>(null);
+
+  // Close popover on month change (stale anchor against rerendered grid)
+  useEffect(() => {
+    setPopover(null);
+  }, [month]);
+
+  const handleOpenPopover = (date: Date, anchor: DayPopoverAnchor) => {
+    setPopover({ date, anchor });
+  };
+
+  const handleClose = () => setPopover(null);
 
   return (
     <div>
@@ -61,10 +83,17 @@ export function MonthGrid({ month, selectedDay, summary, onDaySelect }: MonthGri
               isSelected={isSameDay(day, selectedDay)}
               {...(daySummary !== undefined ? { summary: daySummary } : {})}
               onSelect={onDaySelect}
+              onOpenPopover={handleOpenPopover}
             />
           );
         })}
       </div>
+
+      <DayPopover
+        date={popover?.date ?? new Date()}
+        anchor={popover?.anchor ?? null}
+        onClose={handleClose}
+      />
     </div>
   );
 }
