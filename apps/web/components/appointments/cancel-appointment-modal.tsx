@@ -116,7 +116,7 @@ export function CancelAppointmentModal({ appointment, onClose }: CancelAppointme
           <button
             type="button"
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || reason.trim().length === 0}
             className="flex items-center gap-2 rounded-lg bg-[#ba1a1a] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#a61717] shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {mutation.isPending && (

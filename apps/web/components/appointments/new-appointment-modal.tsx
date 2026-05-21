@@ -135,6 +135,7 @@ export function NewAppointmentModal({ defaultDate, onClose }: NewAppointmentModa
     staleTime: 30_000,
   });
 
+  const now = new Date();
   const openSlots = getOpenSlots(
     new Date(`${dateField}T12:00:00-03:00`),
     dayAppointments.map((a) => ({
@@ -143,7 +144,7 @@ export function NewAppointmentModal({ defaultDate, onClose }: NewAppointmentModa
       status: a.status,
     })),
     Number(durationMinutes),
-  );
+  ).filter((slot) => slot.getTime() > now.getTime());
 
   // ── Mutation ────────────────────────────────────────────────────────────────
   const mutation = useMutation({
@@ -534,7 +535,10 @@ export function NewAppointmentModal({ defaultDate, onClose }: NewAppointmentModa
           {/* Server error */}
           {mutation.isError && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 border border-red-200">
-              {(mutation.error as Error).message}
+              {(() => {
+                const err = mutation.error as Error & { body?: { message?: string } };
+                return err.body?.message ?? err.message;
+              })()}
             </p>
           )}
         </form>
