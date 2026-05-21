@@ -25,7 +25,10 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob:",
+              // External avatars (ui-avatars.com, pravatar.cc) need HTTPS images.
+              // Keep this scoped to https: rather than '*' so the rest of the
+              // policy stays meaningful.
+              "img-src 'self' data: blob: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
               `connect-src 'self' ${process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001'}`,
               "frame-ancestors 'none'",
