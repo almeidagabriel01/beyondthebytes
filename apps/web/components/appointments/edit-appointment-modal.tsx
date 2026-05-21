@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -10,11 +10,17 @@ import {
   type AppointmentResponse,
 } from '@medschedule/shared';
 import { updateAppointment } from '@/lib/appointments';
+import { maskCurrency, parseCurrency, formatCurrencyValue } from '@/lib/currency';
 
 const EditSchema = z.object({
   type: AppointmentTypeSchema,
   insurance: z.string().min(1),
-  value: z.string().optional(),
+  value: z
+    .string()
+    .optional()
+    .refine((v) => !v || parseCurrency(v) !== undefined, {
+      message: 'Valor inválido',
+    }),
   observations: z.string().max(1000).optional(),
 });
 
@@ -39,13 +45,14 @@ export function EditAppointmentModal({ appointment, onClose, onSaved }: EditAppo
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<EditForm>({
     resolver: zodResolver(EditSchema),
     defaultValues: {
       type: appointment.type,
       insurance: appointment.insurance,
-      value: appointment.value != null ? String(appointment.value) : '',
+      value: appointment.value != null ? formatCurrencyValue(Number(appointment.value)) : '',
       observations: appointment.observations ?? '',
     },
   });
@@ -56,7 +63,7 @@ export function EditAppointmentModal({ appointment, onClose, onSaved }: EditAppo
       await updateAppointment(appointment.id, {
         type: data.type,
         insurance: data.insurance,
-        value: data.value ? Number(data.value) : undefined,
+        value: data.value ? parseCurrency(data.value) : undefined,
         observations: data.observations || undefined,
       });
       onSaved();
@@ -133,16 +140,26 @@ export function EditAppointmentModal({ appointment, onClose, onSaved }: EditAppo
 
           <div>
             <label className="block text-[12px] font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-              Valor (R$)
+              Valor
             </label>
-            <input
-              {...register('value')}
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0,00"
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-[14px] text-[#0f172a] focus:outline-none focus:ring-2 focus:ring-[#4648d4]/30"
+            <Controller
+              name="value"
+              control={control}
+              render={({ field }) => (
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="R$ 0,00"
+                  value={field.value ?? ''}
+                  onChange={(e) => field.onChange(maskCurrency(e.target.value))}
+                  onBlur={field.onBlur}
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-[14px] text-[#0f172a] focus:outline-none focus:ring-2 focus:ring-[#4648d4]/30"
+                />
+              )}
             />
+            {errors.value && (
+              <p className="text-[12px] text-[#ba1a1a] mt-1">{errors.value.message}</p>
+            )}
           </div>
 
           <div>

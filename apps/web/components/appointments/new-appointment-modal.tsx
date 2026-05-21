@@ -15,6 +15,7 @@ import {
 } from '@medschedule/shared';
 import { createAppointment, fetchDayAppointments } from '@/lib/appointments';
 import { clientEnv } from '@/lib/env';
+import { maskCurrency, parseCurrency } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { PatientQuickRegisterModal } from './patient-quick-register-modal';
 
@@ -23,19 +24,6 @@ import { PatientQuickRegisterModal } from './patient-quick-register-modal';
 type PatientSuggestion = { id: string; fullName: string; cpf: string };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function maskCurrency(v: string): string {
-  const digits = v.replace(/\D/g, '');
-  if (!digits) return '';
-  const num = parseInt(digits, 10) / 100;
-  return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function parseCurrency(masked: string): number | undefined {
-  const raw = masked.replace(/[^\d,]/g, '').replace(',', '.');
-  const n = parseFloat(raw);
-  return isNaN(n) || n <= 0 ? undefined : n;
-}
 
 function todayIso(): string {
   return format(new Date(), 'yyyy-MM-dd');
