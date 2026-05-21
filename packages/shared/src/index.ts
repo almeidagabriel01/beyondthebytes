@@ -9,3 +9,4 @@ export * from './schemas/appointment';
 export * from './domain/scheduling';
 export * from './domain/appointment-status';
 export * from './schemas/dashboard';
+export * from './schemas/clinical-note';
