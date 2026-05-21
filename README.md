@@ -1,8 +1,8 @@
 # MedSchedule
 
-Sistema SaaS de agenda médica para clínicas pequenas e consultórios — substitui processos manuais de papel/planilha/agenda física centralizando agendamentos, pacientes, status de consulta, observações clínicas e visão operacional do dia.
+Sistema SaaS de agenda médica para clínicas pequenas — centraliza agendamentos, pacientes, status de consulta, observações clínicas e visão operacional do dia. Substitui processos manuais de papel/planilha/agenda física.
 
-Projeto de avaliação para vaga de Engenheiro de Software Senior. Spec em [`docs/9683a7ac-bb22-4df9-a88a-391a6ff5fb90_Desafio_MedSchedule_.pdf`](./docs).
+Projeto de avaliação técnica. Spec original em [`docs/9683a7ac-bb22-4df9-a88a-391a6ff5fb90_Desafio_MedSchedule_.pdf`](./docs).
 
 ---
 
@@ -10,11 +10,10 @@ Projeto de avaliação para vaga de Engenheiro de Software Senior. Spec em [`doc
 
 | Camada | Tecnologia |
 |---|---|
-| Frontend | Next.js 15 App Router · React 19 · TanStack Query v5 · Tailwind v4 · Tiptap v3 |
-| Backend | NestJS 10 · Prisma 6 · Zod · Passport-JWT (httpOnly cookie) · Helmet |
-| Banco | PostgreSQL 16 (local Docker · Neon em produção) com `btree_gist` + `pg_trgm` |
+| Frontend | Next.js 15 (App Router) · React 19 · TanStack Query v5 · Tailwind v4 · Tiptap v3 |
+| Backend | NestJS 10 · Prisma 6 · Zod · Passport-JWT (cookie httpOnly) · Helmet |
+| Banco | PostgreSQL 16 com extensões `btree_gist` + `pg_trgm` |
 | Monorepo | Turborepo 2 + pnpm 9 workspaces |
-| Deploy-ready | Dockerfile multi-stage para a API · `vercel.json` para o web no monorepo (ver seção [Deploy](#deploy)) |
 
 ---
 
@@ -22,7 +21,7 @@ Projeto de avaliação para vaga de Engenheiro de Software Senior. Spec em [`doc
 
 - **Node.js ≥ 22** (`nvm install 22`)
 - **pnpm 9** (`corepack enable && corepack prepare pnpm@9 --activate`)
-- **Docker Desktop** (para Postgres local)
+- **Docker Desktop** (Postgres local via `docker-compose.yml`)
 
 ---
 
@@ -31,11 +30,11 @@ Projeto de avaliação para vaga de Engenheiro de Software Senior. Spec em [`doc
 ```bash
 git clone <repo-url> && cd bey
 pnpm install
-docker compose up -d                     # Postgres + Adminer locais
+docker compose up -d
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 pnpm --filter @medschedule/api db:migrate:dev
-pnpm --filter @medschedule/api db:seed   # admin@medschedule.local / Admin@12345
+pnpm --filter @medschedule/api db:seed
 pnpm dev
 ```
 
@@ -57,18 +56,18 @@ pnpm dev
 | Var | Descrição |
 |---|---|
 | `DATABASE_URL` | Connection string Postgres |
-| `NODE_ENV` | `development` · `production` · `test` |
+| `NODE_ENV` | `development` · `test` |
 | `PORT` | Porta HTTP (default 3001) |
-| `CORS_ORIGIN` | Origem permitida (em prod: URL pública do web) |
-| `JWT_SECRET` | Mínimo 32 caracteres — assina o access token |
-| `JWT_REFRESH_SECRET` | Mínimo 32 caracteres — assina o refresh token |
+| `CORS_ORIGIN` | Origem permitida pelo CORS (default `http://localhost:3000`) |
+| `JWT_SECRET` | ≥ 32 caracteres — assina o access token |
+| `JWT_REFRESH_SECRET` | ≥ 32 caracteres — assina o refresh token |
 
 ### `apps/web/.env.local`
 
 | Var | Descrição |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | URL pública da API (build-time + runtime) |
-| `JWT_SECRET` | Mesmo valor da API — usado pelo middleware Next pra validar cookie |
+| `NEXT_PUBLIC_API_URL` | URL da API (build-time + runtime) |
+| `JWT_SECRET` | Mesmo valor da API — usado pelo middleware Next pra validar o cookie antes de servir páginas autenticadas |
 
 ---
 
@@ -101,8 +100,7 @@ bey/
 ├── apps/
 │   ├── api/                     NestJS — auth, patients, appointments, dashboard, notes
 │   │   ├── src/modules/         um módulo por agregado de domínio
-│   │   ├── prisma/              schema, migrations, seed
-│   │   └── Dockerfile           imagem multi-stage pro Railway
+│   │   └── prisma/              schema, migrations, seed
 │   └── web/                     Next.js App Router
 │       ├── app/(app)/           rotas autenticadas (sidebar + topbar)
 │       ├── app/(auth)/login/    rota pública
@@ -113,77 +111,50 @@ bey/
 │   └── tsconfig/                tsconfigs compartilhadas
 ├── .github/workflows/ci.yml     lint + typecheck + test + build
 ├── docker-compose.yml           Postgres 16 + Adminer locais
-├── vercel.json                  config de build pro monorepo
 └── turbo.json                   pipeline turbo
 ```
 
 ---
 
-## Funcionalidades entregues (11 telas do PDF)
+## Funcionalidades
 
-| # | Tela | Rota |
+### 11 telas do PDF
+
+| # | Tela | Rota / Como acessar |
 |---|---|---|
 | 1 | Login | `/login` |
 | 2 | Dashboard | `/dashboard` |
 | 3 | Calendário mensal | `/calendario` |
 | 4 | Agenda diária | `/agenda` |
-| 5 | Modal Novo Agendamento | sidebar/topbar CTA |
-| 6 | Cadastro de Paciente | `/pacientes` |
+| 5 | Modal Novo Agendamento | botão "Novo agendamento" na topbar/sidebar |
+| 6 | Cadastro de Paciente | `/pacientes` — botão "Novo Paciente" |
 | 7 | Detalhe da Consulta | drawer em `/consultas?id=<id>` |
-| 8 | Modal Edição | dentro do drawer |
-| 9 | Modal Cancelamento | dentro do drawer |
-| 10 | Observações Clínicas | editor inline Tiptap no drawer |
-| 11 | Tela 404 | `/qualquer-rota-inexistente` |
+| 8 | Modal Edição | botão "Editar" dentro do drawer |
+| 9 | Modal Cancelamento | botão "Cancelar" dentro do drawer |
+| 10 | Observações Clínicas | editor Tiptap inline no drawer de detalhe |
+| 11 | Tela 404 | qualquer rota inexistente |
 
-Extras: `/historico` (consultas REALIZADO+CANCELADO com filtro de data) e `/configuracoes` (info da conta + logout).
+### Páginas adicionais
 
-### Regras de negócio implementadas
+- `/historico` — lista de consultas REALIZADO + CANCELADO com filtro de data
+- `/configuracoes` — info da conta autenticada + logout
+
+### Regras de negócio
 
 - Atendimento 07:00–18:30 em slots de 30 min (`packages/shared/src/domain/scheduling.ts`)
-- FSM `agendado → confirmado → aguardando → em_atendimento → realizado` com escape pra `cancelado` a partir de agendado/confirmado (`packages/shared/src/domain/appointment-status.ts`)
-- Exclusão de overlap por usuário via Postgres `EXCLUDE` constraint (`btree_gist`)
-- Slots anteriores ao horário atual filtrados automaticamente do seletor
-- Cancelados e realizados permanecem visíveis; transições proibidas em estados terminais
-- Observações clínicas append-only (revisões imutáveis em `ClinicalNoteRevision`)
-- Autorização: notas só editáveis pelo autor; appointment scope por `userId`
-
----
-
-## Deploy
-
-> **Status atual**: o projeto está **deploy-ready** mas **não tem URL pública ativa**. A avaliação é feita rodando localmente via [Setup local](#setup-local) acima.
->
-> Os artefatos abaixo (Dockerfile, vercel.json, env vars documentadas) demonstram que o projeto pode ser colocado em produção com mínimo esforço quando houver demanda real.
-
-### Arquitetura de produção pretendida
-
-- **Web** → qualquer provedor que rode Next.js 15 (Vercel é o caminho natural — `vercel.json` na raiz já configura o build no monorepo)
-- **API** → qualquer plataforma que rode container persistente (Railway, Fly.io, Render, Cloud Run) usando `apps/api/Dockerfile`. **Não vai bem em serverless** por causa de cold start e connection pooling
-- **DB** → qualquer Postgres 16+ com extensões `btree_gist` e `pg_trgm` habilitadas (Neon, Supabase, AWS RDS, etc.)
-
-### O que está pronto no repo
-
-| Artefato | O que faz |
-|---|---|
-| `apps/api/Dockerfile` | Multi-stage: deps (pnpm fetch) → build (`prisma generate` + `nest build`) → runtime (Node 22 alpine, ~150MB). Boot roda `prisma migrate deploy` antes de iniciar o servidor |
-| `apps/api/.dockerignore` | Exclui `node_modules`, `dist`, `.env*`, `coverage` |
-| `vercel.json` | `buildCommand` + `installCommand` apontando pro turbo filter do web. Funciona sem precisar configurar Root Directory no dashboard da Vercel |
-| `apps/api/.env.example` · `apps/web/.env.example` | Todas as env vars necessárias documentadas |
-
-### Quando for deployar
-
-1. Provisionar Postgres com `btree_gist` + `pg_trgm` habilitados → copiar `DATABASE_URL`
-2. Setar env vars no provedor da API (ver tabela acima). Gerar segredos com `openssl rand -hex 32`
-3. Apontar a plataforma de container pro `apps/api/Dockerfile`
-4. Deploy do web no provedor preferido — setar `NEXT_PUBLIC_API_URL` apontando pra URL da API e `JWT_SECRET` com o mesmo valor da API
-5. Voltar e atualizar `CORS_ORIGIN` na API pra URL do web
-6. Rodar seed uma vez: `pnpm --filter @medschedule/api db:seed` no container ou via CLI do provedor
+- FSM `agendado → confirmado → aguardando → em_atendimento → realizado`, com escape `agendado/confirmado → cancelado` (`packages/shared/src/domain/appointment-status.ts`)
+- Exclusão de overlap por usuário via Postgres `EXCLUDE` constraint (`btree_gist`) — impossível persistir dois agendamentos no mesmo slot
+- Slots passados são automaticamente filtrados do seletor de "novo agendamento"
+- Estados terminais (REALIZADO, CANCELADO) não podem ser alterados, mas permanecem visíveis
+- Visual "vencido" para consultas não-terminais com `startsAt < now` (apenas visual, não persistido)
+- Observações clínicas append-only: cada save cria uma nova `ClinicalNoteRevision`, nada é mutado
+- Autorização: notas só editáveis pelo autor; appointment e patient scope por `userId`
 
 ---
 
 ## CI
 
-Workflow único em `.github/workflows/ci.yml` rodando em PR e push para `main`:
+`.github/workflows/ci.yml` roda em PR e push para `main`:
 
 ```
 pnpm install --frozen-lockfile
@@ -195,31 +166,44 @@ pnpm turbo build
 
 ---
 
+## Testes
+
+```bash
+pnpm -F @medschedule/api test            # 84 testes
+pnpm -F @medschedule/api test:coverage   # threshold 90% (statements + functions)
+pnpm -F @medschedule/shared test         # 89 testes (domain puro)
+```
+
+Cobertura atual nos serviços novos (Phase 6): DashboardService 100%, NotesService 100%. Cobertura agregada da API: 98% statements / 84% branches / 100% functions.
+
+---
+
 ## Decisões técnicas relevantes
 
-- **Auth NestJS-owned, não Auth.js**: backend separado é a autoridade de sessão. Access token (15 min) + refresh token rotativo (7 dias) em cookies httpOnly. Documentado em `ADR-001` do código de auth.
-- **Single-clinic por deploy**: `Clinic` não é uma entidade do banco — cada deploy é uma clínica. Evita complexidade desnecessária de multi-tenancy que o PDF não pede.
-- **TanStack Query + invalidação por chave**: zero reloads, optimistic UX. Drawer abre via query param `?id=` (deep-linkável, server-component lê `searchParams`).
-- **Status: FSM + visual "vencido"**: transições validadas tanto no domain quanto no Postgres. "Vencido" é estado visual (não persistido) quando consulta não-terminal passou do horário.
-- **Tiptap inline com revisões imutáveis**: editor sempre visível no drawer, mas `Salvar` gated em `status === REALIZADO`. Cada save gera um registro em `ClinicalNoteRevision` — nada é mutado.
-- **Postgres exclusion constraint** (`btree_gist`): garante "nunca dois agendamentos no mesmo horário" no nível do banco, não só na aplicação. Mapeado pra `ConflictException` no service.
+- **Auth backend-owned**: NestJS é a autoridade de sessão. Access token (15 min) + refresh token rotativo (7 dias) em cookies `httpOnly`. Refresh detecta reuse e revoga toda a family.
+- **Single-clinic por deploy**: `Clinic` não é entidade do banco. Cada deploy é uma clínica. Evita multi-tenancy que o PDF não pede.
+- **TanStack Query + invalidação por chave**: zero reloads, optimistic UX. Drawers abrem via query param `?id=` (deep-linkável, server-component lê `searchParams` no Next 15).
+- **Status FSM + visual "vencido"**: transições validadas no domain (`canTransition`) e no DB (optimistic lock em `transition()`). Vencido é UI-only.
+- **Tiptap inline com revisões imutáveis**: editor sempre visível no drawer; `Salvar` gated em `status === REALIZADO`. Save chama `POST /appointments/:id/notes` ou `PATCH /notes/:id` que insere `ClinicalNoteRevision` em transação.
+- **Postgres exclusion constraint**: `EXCLUDE USING gist (...)` no schema garante "nunca dois agendamentos no mesmo horário por usuário" no nível do banco. Mapeado pra `ConflictException` no service.
 
 ---
 
 ## Notas de segurança
 
-Mitigações em produção (Helmet + cookies + validation):
+Mitigações no código:
 
-- HTTPS automático (Vercel + Railway)
-- Cookies `httpOnly`, `secure` em prod, `sameSite=lax`
-- CORS com `credentials: true` e origem explícita
-- Zod validation em todo `@Body` e `@Query`
-- Prisma parameterized queries (zero raw SQL com input do usuário em produção; raw em dashboard usa apenas constantes/IDs já validados)
-- Argon2 para hash de senha
-- Refresh token rotation com detecção de reuso → revoga toda a family
-- Pino logger com redaction de `password`, `cpf`, `phone` em campos sensíveis
+- Cookies `httpOnly` + `sameSite=lax` (e `secure` quando `NODE_ENV=production`)
+- Helmet middleware (CSP básica, X-Frame-Options, etc.)
+- CORS com `credentials: true` e origem explícita via env
+- Zod validation em todo `@Body` e `@Query` via `ZodValidationPipe`
+- Argon2id para hash de senha
+- Refresh token rotation com detecção de reuse → revoga toda a family
+- Optimistic lock no `cancel` endpoint (fecha race TOCTOU)
+- Pino logger com redaction de `password`, `cpf`, `phone`, `email` em campos sensíveis
+- ThrottlerGuard global (100 req/min) + throttler específico no `/auth/login` (5/min)
 
-`pnpm audit` em 2026-05-21: nenhum high/critical em runtime deps.
+**`pnpm audit --prod` em 2026-05-21**: 1 high + 7 moderate em deps transitivas (a maioria via `@nestjs/platform-express` → `path-to-regexp` ReDoS). Sem fix disponível ainda no upstream — runtime risk classificado como baixo dado que os endpoints com path params validam input via Zod antes da rota matar. Acompanhar `pnpm audit` periodicamente.
 
 ---
 
