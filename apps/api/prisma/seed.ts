@@ -401,14 +401,17 @@ async function main(): Promise<void> {
   const password = process.env['SEED_ADMIN_PASSWORD'] ?? 'Admin@12345';
   const passwordHash = await argon2.hash(password);
 
+  const adminAvatarUrl = 'https://i.pravatar.cc/150?u=admin@medschedule.local';
+
   const admin = await prisma.user.upsert({
     where: { email: 'admin@medschedule.local' },
-    update: { name: 'Administrador' },
+    update: { name: 'Administrador', avatarUrl: adminAvatarUrl },
     create: {
       email: 'admin@medschedule.local',
       passwordHash,
       name: 'Administrador',
       role: 'ADMIN',
+      avatarUrl: adminAvatarUrl,
     },
   });
 

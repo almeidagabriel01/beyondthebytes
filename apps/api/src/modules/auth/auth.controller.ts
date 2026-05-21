@@ -14,6 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { LoginRequestSchema, type LoginRequest } from '@medschedule/shared';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
@@ -28,7 +29,10 @@ interface AuthenticatedUser {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Post('login')
   @Public()
@@ -78,8 +82,19 @@ export class AuthController {
   }
 
   @Get('me')
-  me(@Req() req: Request & { user: AuthenticatedUser }) {
-    return req.user;
+  async me(@Req() req: Request & { user: AuthenticatedUser }) {
+    // Fetch fresh user data from the DB so fields not present in the JWT
+    // payload (e.g. avatarUrl) reflect the current row without forcing a
+    // re-login on every change.
+    const user = await this.prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, email: true, name: true, role: true, avatarUrl: true },
+    });
+    if (!user) {
+      // JWT references a deleted user — treat as unauthenticated.
+      throw new UnauthorizedException('User no longer exists');
+    }
+    return user;
   }
 
   private _setCookies(res: Response, accessToken: string, refreshToken: string): void {
