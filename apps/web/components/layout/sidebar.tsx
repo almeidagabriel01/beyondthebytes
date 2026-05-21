@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { fetchMe, logout } from '@/lib/auth';
 import { UserAvatar } from '@/components/shared/user-avatar';
+import { useTopBarSlot } from '@/context/topbar-slot';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -28,6 +29,15 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { onNewAppointment } = useTopBarSlot();
+
+  const handleNewAppointment = () => {
+    if (onNewAppointment) {
+      onNewAppointment();
+    } else {
+      router.push('/calendario?new=1');
+    }
+  };
 
   const { data: me } = useQuery({
     queryKey: ['me'],
@@ -109,6 +119,7 @@ export default function Sidebar() {
       <div className="px-2 lg:px-4 mb-6 flex justify-center">
         <button
           type="button"
+          onClick={handleNewAppointment}
           aria-label="Novo agendamento"
           className="flex items-center justify-center gap-2 rounded-lg bg-sidebar-primary text-white shadow-sm transition-colors hover:opacity-90 h-11 w-11 lg:h-auto lg:w-full lg:py-3 lg:px-4 text-xs font-semibold tracking-wider"
         >

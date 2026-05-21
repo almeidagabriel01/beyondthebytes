@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { format, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,11 +24,23 @@ export function CalendarioClient({ initialSummary }: CalendarioClientProps) {
   const [showNewModal, setShowNewModal] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<AppointmentResponse | null>(null);
   const { setOnNewAppointment } = useTopBarSlot();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     setOnNewAppointment(() => setShowNewModal(true));
     return () => setOnNewAppointment(null);
   }, [setOnNewAppointment, setShowNewModal]);
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setShowNewModal(true);
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete('new');
+      const qs = next.toString();
+      router.replace(qs ? `/calendario?${qs}` : '/calendario', { scroll: false });
+    }
+  }, [searchParams, router]);
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth() + 1;
