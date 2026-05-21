@@ -11,6 +11,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PatientsModule } from './modules/patients/patients.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { NotesModule } from './modules/notes/notes.module';
 
 const _env = validateEnv();
 
@@ -55,6 +56,7 @@ const pinoTransport =
     PatientsModule,
     AppointmentsModule,
     DashboardModule,
+    NotesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
