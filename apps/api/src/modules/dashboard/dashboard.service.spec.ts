@@ -103,8 +103,10 @@ describe('DashboardService', () => {
 
       const result = await service.getToday('user-1');
 
-      expect(typeof result.nextAppointments[0].startsAt).toBe('string');
-      expect(typeof result.nextAppointments[0].endsAt).toBe('string');
+      const first = result.nextAppointments[0];
+      expect(first).toBeDefined();
+      expect(typeof first?.startsAt).toBe('string');
+      expect(typeof first?.endsAt).toBe('string');
     });
   });
 
