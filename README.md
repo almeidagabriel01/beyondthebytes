@@ -14,7 +14,7 @@ Projeto de avaliação para vaga de Engenheiro de Software Senior. Spec em [`doc
 | Backend | NestJS 10 · Prisma 6 · Zod · Passport-JWT (httpOnly cookie) · Helmet |
 | Banco | PostgreSQL 16 (local Docker · Neon em produção) com `btree_gist` + `pg_trgm` |
 | Monorepo | Turborepo 2 + pnpm 9 workspaces |
-| Deploy | Vercel (web) · Railway (API container) · Neon (DB serverless) |
+| Deploy-ready | Dockerfile multi-stage para a API · `vercel.json` para o web no monorepo (ver seção [Deploy](#deploy)) |
 
 ---
 
@@ -151,51 +151,33 @@ Extras: `/historico` (consultas REALIZADO+CANCELADO com filtro de data) e `/conf
 
 ## Deploy
 
-A aplicação está em 3 provedores. Tudo gratuito ou ~$5/mês.
+> **Status atual**: o projeto está **deploy-ready** mas **não tem URL pública ativa**. A avaliação é feita rodando localmente via [Setup local](#setup-local) acima.
+>
+> Os artefatos abaixo (Dockerfile, vercel.json, env vars documentadas) demonstram que o projeto pode ser colocado em produção com mínimo esforço quando houver demanda real.
 
-### 1. Banco — Neon
+### Arquitetura de produção pretendida
 
-1. Criar projeto em https://neon.tech
-2. Habilitar extensões: `btree_gist`, `pg_trgm` (Settings → Extensions)
-3. Copiar a connection string (formato `postgresql://user:pass@host/db?sslmode=require`)
-4. (Opcional) Criar branch `dev` separada da `main` pra preview deploys
+- **Web** → qualquer provedor que rode Next.js 15 (Vercel é o caminho natural — `vercel.json` na raiz já configura o build no monorepo)
+- **API** → qualquer plataforma que rode container persistente (Railway, Fly.io, Render, Cloud Run) usando `apps/api/Dockerfile`. **Não vai bem em serverless** por causa de cold start e connection pooling
+- **DB** → qualquer Postgres 16+ com extensões `btree_gist` e `pg_trgm` habilitadas (Neon, Supabase, AWS RDS, etc.)
 
-### 2. API — Railway
+### O que está pronto no repo
 
-1. Criar projeto em https://railway.app, conectar o repo
-2. Apontar pra `apps/api/Dockerfile` (Settings → Build → Dockerfile path)
-3. Set env vars no dashboard:
-   ```
-   DATABASE_URL   = <connection string da Neon>
-   NODE_ENV       = production
-   PORT           = 3001
-   CORS_ORIGIN    = https://<seu-domínio-vercel>
-   JWT_SECRET     = <32+ chars, openssl rand -hex 32>
-   JWT_REFRESH_SECRET = <outro 32+ chars>
-   ```
-4. Deploy. O container roda `npx prisma migrate deploy && node dist/main.js` no boot
-5. Anotar a URL pública gerada (formato `https://<projeto>.up.railway.app`)
-6. (Primeira vez) Rodar o seed via Railway CLI: `railway run pnpm --filter @medschedule/api db:seed`
+| Artefato | O que faz |
+|---|---|
+| `apps/api/Dockerfile` | Multi-stage: deps (pnpm fetch) → build (`prisma generate` + `nest build`) → runtime (Node 22 alpine, ~150MB). Boot roda `prisma migrate deploy` antes de iniciar o servidor |
+| `apps/api/.dockerignore` | Exclui `node_modules`, `dist`, `.env*`, `coverage` |
+| `vercel.json` | `buildCommand` + `installCommand` apontando pro turbo filter do web. Funciona sem precisar configurar Root Directory no dashboard da Vercel |
+| `apps/api/.env.example` · `apps/web/.env.example` | Todas as env vars necessárias documentadas |
 
-### 3. Web — Vercel
+### Quando for deployar
 
-1. Importar o repo em https://vercel.com
-2. **Não** mexer em Root Directory (deixar a raiz) — o `vercel.json` na raiz já configura o build pro monorepo
-3. Set env vars:
-   ```
-   NEXT_PUBLIC_API_URL = <URL pública da API no Railway>
-   JWT_SECRET          = <mesmo valor da API>
-   ```
-4. Deploy. URL gerada no formato `https://<projeto>.vercel.app`
-5. Voltar no Railway e atualizar `CORS_ORIGIN` para a URL da Vercel
-
-### Checklist pós-deploy
-
-- [ ] Web abre, redireciona para `/login`
-- [ ] Login com `admin@medschedule.local` funciona (cookie `access_token` setado)
-- [ ] `/dashboard` carrega com dados do seed
-- [ ] Criar consulta, avançar status, adicionar nota — todas as ações funcionam sem reload
-- [ ] Logout limpa cookies e redireciona pra `/login`
+1. Provisionar Postgres com `btree_gist` + `pg_trgm` habilitados → copiar `DATABASE_URL`
+2. Setar env vars no provedor da API (ver tabela acima). Gerar segredos com `openssl rand -hex 32`
+3. Apontar a plataforma de container pro `apps/api/Dockerfile`
+4. Deploy do web no provedor preferido — setar `NEXT_PUBLIC_API_URL` apontando pra URL da API e `JWT_SECRET` com o mesmo valor da API
+5. Voltar e atualizar `CORS_ORIGIN` na API pra URL do web
+6. Rodar seed uma vez: `pnpm --filter @medschedule/api db:seed` no container ou via CLI do provedor
 
 ---
 
