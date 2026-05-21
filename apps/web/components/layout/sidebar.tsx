@@ -89,23 +89,33 @@ export default function Sidebar() {
   }, [menuOpen, handleClickOutside, closeMenu]);
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar py-6">
+    <aside className="hidden md:flex fixed inset-y-0 left-0 z-50 md:w-16 lg:w-64 flex-col bg-sidebar py-6">
       {/* Brand */}
-      <div className="px-6 mb-8">
-        <h1 className="text-xl font-bold leading-tight text-white">MedSchedule</h1>
-        <p className="text-xs leading-tight text-slate-400 mt-0.5">Medical SaaS</p>
+      <div className="mb-8 flex items-center justify-center lg:justify-start lg:px-6">
+        {/* Compact brand mark (tablet, icon-only) */}
+        <div className="lg:hidden flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-white">
+          <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden="true">
+            medical_services
+          </span>
+        </div>
+        {/* Full brand (desktop) */}
+        <div className="hidden lg:block">
+          <h1 className="text-xl font-bold leading-tight text-white">MedSchedule</h1>
+          <p className="text-xs leading-tight text-slate-400 mt-0.5">Medical SaaS</p>
+        </div>
       </div>
 
       {/* Novo Agendamento CTA */}
-      <div className="px-4 mb-6">
+      <div className="px-2 lg:px-4 mb-6 flex justify-center">
         <button
           type="button"
-          className="w-full flex items-center justify-center gap-2 rounded-lg bg-sidebar-primary py-3 px-4 text-xs font-semibold tracking-wider text-white shadow-sm transition-colors hover:opacity-90"
+          aria-label="Novo agendamento"
+          className="flex items-center justify-center gap-2 rounded-lg bg-sidebar-primary text-white shadow-sm transition-colors hover:opacity-90 h-11 w-11 lg:h-auto lg:w-full lg:py-3 lg:px-4 text-xs font-semibold tracking-wider"
         >
           <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden="true">
             add
           </span>
-          Novo Agendamento
+          <span className="hidden lg:inline">Novo Agendamento</span>
         </button>
       </div>
 
@@ -118,8 +128,10 @@ export default function Sidebar() {
               key={href}
               href={href}
               aria-current={isActive ? 'page' : undefined}
+              title={label}
               className={cn(
-                'mx-2 my-1 flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200',
+                'mx-2 my-1 flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200',
+                'justify-center lg:justify-start lg:px-4',
                 isActive
                   ? 'bg-sidebar-primary text-white shadow-md'
                   : 'text-slate-400 hover:bg-[#1e293b] hover:text-white',
@@ -132,14 +144,14 @@ export default function Sidebar() {
               >
                 {icon}
               </span>
-              {label}
+              <span className="hidden lg:inline">{label}</span>
             </Link>
           );
         })}
       </nav>
 
       {/* User section */}
-      <div className="mt-auto px-4 pt-4 border-t border-[#1e293b]">
+      <div className="mt-auto px-2 lg:px-4 pt-4 border-t border-[#1e293b]">
         <button
           ref={triggerRef}
           type="button"
@@ -147,11 +159,16 @@ export default function Sidebar() {
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((o) => !o)}
-          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm text-slate-400 transition-all hover:bg-[#1e293b] hover:text-white"
+          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm text-slate-400 transition-all hover:bg-[#1e293b] hover:text-white justify-center lg:justify-start"
         >
           <UserAvatar name={me?.name} avatarUrl={me?.avatarUrl ?? null} size="sm" />
-          <span className="flex-1 truncate text-left">{me?.name || me?.email || '...'}</span>
-          <span className="material-symbols-outlined text-sm leading-none" aria-hidden="true">
+          <span className="hidden lg:block flex-1 truncate text-left">
+            {me?.name || me?.email || '...'}
+          </span>
+          <span
+            className="hidden lg:inline material-symbols-outlined text-sm leading-none"
+            aria-hidden="true"
+          >
             unfold_more
           </span>
         </button>
@@ -167,7 +184,7 @@ export default function Sidebar() {
             style={{
               left: menuPosition.left,
               bottom: menuPosition.bottom,
-              width: menuPosition.width,
+              minWidth: Math.max(menuPosition.width, 240),
             }}
             className="fixed z-[60] rounded-xl border border-[#e2e8f0] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.15)]"
           >
