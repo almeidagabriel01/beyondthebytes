@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@plugin "@tailwindcss/typography";
 
 /* MedSchedule design tokens — source: Google Stitch project 3348431107688966617
    See docs/DESIGN-SYSTEM.md for full token reference.
