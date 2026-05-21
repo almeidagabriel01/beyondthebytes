@@ -276,17 +276,27 @@ export class AppointmentsService {
     }
 
     const appointment = await this.prisma.$transaction(async (tx) => {
-      const updated = await tx.appointment.update({
-        where: { id, userId },
-        data: {
-          status: AppointmentStatus.CANCELADO,
-          cancelledAt: new Date(),
-          cancelReason: dto.reason,
-        },
-        include: {
-          patient: { select: { id: true, fullName: true, cpf: true, phone: true } },
-        },
-      });
+      const updated = await tx.appointment
+        .update({
+          where: { id, userId, status: existing.status },
+          data: {
+            status: AppointmentStatus.CANCELADO,
+            cancelledAt: new Date(),
+            cancelReason: dto.reason,
+          },
+          include: {
+            patient: { select: { id: true, fullName: true, cpf: true, phone: true } },
+          },
+        })
+        .catch((e: unknown) => {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+            throw new ConflictException({
+              code: 'STATUS_CONFLICT',
+              message: 'O status da consulta foi alterado por outra requisição.',
+            });
+          }
+          throw e;
+        });
       await tx.appointmentEvent.create({
         data: {
           appointmentId: id,
