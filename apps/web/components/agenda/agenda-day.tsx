@@ -90,21 +90,21 @@ export function AgendaDay({ isoDate, onCancelAppointment }: AgendaDayProps) {
       <AgendaSection
         title="Manhã"
         icon="light_mode"
-        iconColor="text-[#b55d00]"
+        iconColor="text-[#4648d4]"
         appointments={manha}
         onCancelAppointment={onCancelAppointment}
       />
       <AgendaSection
         title="Tarde"
         icon="routine"
-        iconColor="text-[#475569]"
+        iconColor="text-[#b55d00]"
         appointments={tarde}
         onCancelAppointment={onCancelAppointment}
       />
       <AgendaSection
         title="Noite"
-        icon="bedtime"
-        iconColor="text-[#4648d4]"
+        icon="dark_mode"
+        iconColor="text-[#3323cc]"
         appointments={noite}
         onCancelAppointment={onCancelAppointment}
       />
