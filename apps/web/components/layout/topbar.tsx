@@ -93,7 +93,7 @@ export default function TopBar() {
     Object.entries(PAGE_CONFIG).find(([key]) => pathname.startsWith(key))?.[1] ?? DEFAULT_CONFIG;
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-[#cbd5e1] bg-white px-8">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-[#cbd5e1] bg-white px-4 md:px-8 md:gap-4">
       {/* Page title with icon */}
       <div className="flex items-center gap-3">
         <span
@@ -108,7 +108,7 @@ export default function TopBar() {
         </h1>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* Right slot (Agenda date nav) OR default search+button */}
         {rightSlot ?? (
           <>
@@ -155,11 +155,11 @@ export default function TopBar() {
           </>
         )}
 
-        {/* Notifications — always visible */}
+        {/* Notifications — hidden on mobile (unimplemented) */}
         <button
           type="button"
           aria-label="Notificações"
-          className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#475569] transition-colors hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+          className="relative hidden md:flex h-9 w-9 items-center justify-center rounded-full text-[#475569] transition-colors hover:bg-[#f1f5f9] hover:text-[#0f172a]"
         >
           <span className="material-symbols-outlined text-[24px] leading-none" aria-hidden="true">
             notifications
