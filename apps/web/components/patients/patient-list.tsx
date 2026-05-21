@@ -1,12 +1,12 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PatientsListResponse, PatientResponse } from '@medschedule/shared';
 import { clientEnv } from '@/lib/env';
 import { cn } from '@/lib/utils';
 import { PatientFormModal } from './patient-form-modal';
+import { DeletePatientConfirm } from './delete-patient-confirm';
 
 async function fetchPatients(params: {
   search?: string;
@@ -71,19 +71,21 @@ interface PatientRowProps {
   patient: PatientResponse;
   onEdit: (p: PatientResponse) => void;
   onDelete: (p: PatientResponse) => void;
+  onSelect: (id: string) => void;
 }
 
-function PatientRow({ patient, onEdit, onDelete }: PatientRowProps) {
+function PatientRow({ patient, onEdit, onDelete, onSelect }: PatientRowProps) {
   return (
     <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors group">
       <PatientAvatar name={patient.fullName} />
       <div className="flex-1 min-w-0">
-        <Link
-          href={`/pacientes/${patient.id}`}
-          className="text-sm font-medium text-gray-900 truncate hover:text-blue-600 hover:underline transition-colors block"
+        <button
+          type="button"
+          onClick={() => onSelect(patient.id)}
+          className="text-sm font-medium text-gray-900 truncate hover:text-blue-600 hover:underline transition-colors block text-left w-full"
         >
           {patient.fullName}
-        </Link>
+        </button>
         <p className="text-xs text-gray-500">{formatCpfDisplay(patient.cpf)}</p>
       </div>
       <p className="text-xs text-gray-400 hidden sm:block">{patient.phone}</p>
@@ -109,53 +111,11 @@ function PatientRow({ patient, onEdit, onDelete }: PatientRowProps) {
   );
 }
 
-interface DeleteConfirmProps {
-  patient: PatientResponse;
-  onConfirm: () => void;
-  onCancel: () => void;
-  isPending: boolean;
+interface PatientListProps {
+  onSelect: (id: string) => void;
 }
 
-function DeleteConfirm({ patient, onConfirm, onCancel, isPending }: DeleteConfirmProps) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="delete-confirm-title"
-    >
-      <div className="w-full max-w-sm rounded-xl bg-white shadow-xl mx-4 p-6">
-        <h2 id="delete-confirm-title" className="text-base font-semibold text-gray-900 mb-2">
-          Excluir paciente?
-        </h2>
-        <p className="text-sm text-gray-600 mb-6">
-          <span className="font-medium">{patient.fullName}</span> será removido(a) do sistema. Esta
-          ação não pode ser desfeita.
-        </p>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isPending}
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={isPending}
-            className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-          >
-            {isPending ? 'Excluindo...' : 'Excluir'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function PatientList() {
+export function PatientList({ onSelect }: PatientListProps) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
@@ -268,6 +228,7 @@ export function PatientList() {
             patient={patient}
             onEdit={handleEdit}
             onDelete={handleDeleteRequest}
+            onSelect={onSelect}
           />
         ))}
 
@@ -287,11 +248,12 @@ export function PatientList() {
       )}
 
       {deletingPatient && (
-        <DeleteConfirm
+        <DeletePatientConfirm
           patient={deletingPatient}
           onConfirm={() => deleteMutation.mutate(deletingPatient.id)}
           onCancel={() => setDeletingPatient(null)}
           isPending={deleteMutation.isPending}
+          error={deleteMutation.isError ? (deleteMutation.error as Error).message : null}
         />
       )}
     </div>
