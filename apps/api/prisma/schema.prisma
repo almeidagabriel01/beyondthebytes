@@ -24,6 +24,7 @@ model User {
   patients            Patient[]
   appointments        Appointment[] @relation("AppointmentUser")
   createdAppointments Appointment[] @relation("AppointmentCreatedBy")
+  clinicalNotes       ClinicalNote[]
 }
 
 model RefreshToken {
@@ -94,10 +95,11 @@ model Appointment {
   cancelledAt     DateTime?
   cancelReason    String?
 
-  patient   Patient            @relation(fields: [patientId], references: [id])
-  user      User               @relation("AppointmentUser", fields: [userId], references: [id])
-  createdBy User               @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
-  events    AppointmentEvent[]
+  patient       Patient            @relation(fields: [patientId], references: [id])
+  user          User               @relation("AppointmentUser", fields: [userId], references: [id])
+  createdBy     User               @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
+  events        AppointmentEvent[]
+  clinicalNotes ClinicalNote[]
 
   @@index([userId, startsAt])
   @@index([patientId, startsAt])
@@ -118,4 +120,30 @@ model AppointmentEvent {
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
   @@index([appointmentId])
+}
+
+model ClinicalNote {
+  id            String   @id @default(cuid())
+  appointmentId String
+  authorId      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  appointment Appointment            @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  author      User                   @relation(fields: [authorId], references: [id])
+  revisions   ClinicalNoteRevision[]
+
+  @@index([appointmentId])
+  @@index([authorId])
+}
+
+model ClinicalNoteRevision {
+  id        String   @id @default(cuid())
+  noteId    String
+  content   Json
+  createdAt DateTime @default(now())
+
+  note ClinicalNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId, createdAt(sort: Desc)])
 }
