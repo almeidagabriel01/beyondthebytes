@@ -46,18 +46,19 @@ export function AgendaSection({
           </div>
         ) : (
           appointments.map((appt) => (
-            <div key={appt.id} className="relative group">
-              <Link href={`/consultas?id=${appt.id}`} className="block">
-                <AppointmentCard appointment={appt} variant="agenda" />
-              </Link>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <QuickActionsMenu
-                  appointment={appt}
-                  queryKey={['appointments-day', isoDate]}
-                  onCancelRequest={onCancelAppointment}
-                />
-              </div>
-            </div>
+            <Link key={appt.id} href={`/consultas?id=${appt.id}`} className="block">
+              <AppointmentCard
+                appointment={appt}
+                variant="agenda"
+                rightSlot={
+                  <QuickActionsMenu
+                    appointment={appt}
+                    queryKey={['appointments-day', isoDate]}
+                    onCancelRequest={onCancelAppointment}
+                  />
+                }
+              />
+            </Link>
           ))
         )}
       </div>

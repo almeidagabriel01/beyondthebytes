@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { formatSlotTime } from '@medschedule/shared';
 import type { AppointmentResponse } from '@medschedule/shared';
 import { StatusBadge } from '@/components/shared/status-badge';
@@ -16,6 +17,11 @@ interface AppointmentCardProps {
   appointment: AppointmentResponse;
   variant?: 'agenda' | 'calendar';
   onClick?: (() => void) | undefined;
+  /**
+   * Rendered after the status badge — typically a hover-revealed actions menu.
+   * Caller is responsible for stopping event propagation if the slot is interactive.
+   */
+  rightSlot?: ReactNode;
 }
 
 function VencidoPill() {
@@ -30,6 +36,7 @@ export function AppointmentCard({
   appointment: appt,
   variant = 'agenda',
   onClick,
+  rightSlot,
 }: AppointmentCardProps) {
   const vencido = isVencido(appt);
 
@@ -52,7 +59,7 @@ export function AppointmentCard({
   // ── Calendar variant ────────────────────────────────────────────────────────
   if (variant === 'calendar') {
     let outerClass =
-      'relative bg-white border rounded-lg p-3 flex gap-4 transition-shadow overflow-hidden';
+      'group/card relative bg-white border rounded-lg p-3 flex gap-4 transition-shadow overflow-hidden';
 
     if (isCancelled) {
       outerClass += ' border-dashed border-[#e2e8f0] opacity-60 cursor-not-allowed';
@@ -105,6 +112,11 @@ export function AppointmentCard({
             <div className="flex items-center gap-1.5 shrink-0">
               {vencido && <VencidoPill />}
               <StatusBadge status={appt.status} />
+              {rightSlot ? (
+                <span className="opacity-0 group-hover/card:opacity-100 focus-within:opacity-100 transition-opacity">
+                  {rightSlot}
+                </span>
+              ) : null}
             </div>
           </div>
           <span className="text-[12px] text-[#64748b]">{TYPE_LABELS[appt.type]}</span>
@@ -119,7 +131,8 @@ export function AppointmentCard({
   }
 
   // ── Agenda variant ──────────────────────────────────────────────────────────
-  let outerClass = 'relative bg-white rounded-lg p-4 flex gap-4 transition-shadow overflow-hidden';
+  let outerClass =
+    'group/card relative bg-white rounded-lg p-4 flex gap-4 transition-shadow overflow-hidden';
 
   if (isCancelled) {
     outerClass += ' border border-dashed border-[#e2e8f0] opacity-60 cursor-not-allowed';
@@ -193,6 +206,11 @@ export function AppointmentCard({
           <div className="flex items-center gap-1.5 shrink-0">
             {vencido && <VencidoPill />}
             <StatusBadge status={appt.status} />
+            {rightSlot ? (
+              <span className="opacity-0 group-hover/card:opacity-100 focus-within:opacity-100 transition-opacity">
+                {rightSlot}
+              </span>
+            ) : null}
           </div>
         </div>
         <span className={`text-[13px] ${typeInsuranceColor}`}>{typeInsuranceText}</span>

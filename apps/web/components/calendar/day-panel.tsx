@@ -140,18 +140,19 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
                   </h5>
                   <div className="flex flex-col gap-3">
                     {manha.map((appt) => (
-                      <div key={appt.id} className="relative group">
-                        <Link href={`/consultas?id=${appt.id}`} className="block">
-                          <AppointmentCard appointment={appt} variant="calendar" />
-                        </Link>
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <QuickActionsMenu
-                            appointment={appt}
-                            queryKey={['appointments-day', isoDate]}
-                            onCancelRequest={onCancelAppointment}
-                          />
-                        </div>
-                      </div>
+                      <Link key={appt.id} href={`/consultas?id=${appt.id}`} className="block">
+                        <AppointmentCard
+                          appointment={appt}
+                          variant="calendar"
+                          rightSlot={
+                            <QuickActionsMenu
+                              appointment={appt}
+                              queryKey={['appointments-day', isoDate]}
+                              onCancelRequest={onCancelAppointment}
+                            />
+                          }
+                        />
+                      </Link>
                     ))}
                   </div>
                 </section>
@@ -170,18 +171,19 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
                   </h5>
                   <div className="flex flex-col gap-3">
                     {tarde.map((appt) => (
-                      <div key={appt.id} className="relative group">
-                        <Link href={`/consultas?id=${appt.id}`} className="block">
-                          <AppointmentCard appointment={appt} variant="calendar" />
-                        </Link>
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <QuickActionsMenu
-                            appointment={appt}
-                            queryKey={['appointments-day', isoDate]}
-                            onCancelRequest={onCancelAppointment}
-                          />
-                        </div>
-                      </div>
+                      <Link key={appt.id} href={`/consultas?id=${appt.id}`} className="block">
+                        <AppointmentCard
+                          appointment={appt}
+                          variant="calendar"
+                          rightSlot={
+                            <QuickActionsMenu
+                              appointment={appt}
+                              queryKey={['appointments-day', isoDate]}
+                              onCancelRequest={onCancelAppointment}
+                            />
+                          }
+                        />
+                      </Link>
                     ))}
                   </div>
                 </section>
@@ -200,18 +202,19 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
                   </h5>
                   <div className="flex flex-col gap-3">
                     {noite.map((appt) => (
-                      <div key={appt.id} className="relative group">
-                        <Link href={`/consultas?id=${appt.id}`} className="block">
-                          <AppointmentCard appointment={appt} variant="calendar" />
-                        </Link>
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <QuickActionsMenu
-                            appointment={appt}
-                            queryKey={['appointments-day', isoDate]}
-                            onCancelRequest={onCancelAppointment}
-                          />
-                        </div>
-                      </div>
+                      <Link key={appt.id} href={`/consultas?id=${appt.id}`} className="block">
+                        <AppointmentCard
+                          appointment={appt}
+                          variant="calendar"
+                          rightSlot={
+                            <QuickActionsMenu
+                              appointment={appt}
+                              queryKey={['appointments-day', isoDate]}
+                              onCancelRequest={onCancelAppointment}
+                            />
+                          }
+                        />
+                      </Link>
                     ))}
                   </div>
                 </section>
