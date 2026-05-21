@@ -66,9 +66,19 @@ export function PatientFormModal({ mode, patient, onClose }: PatientFormModalPro
   });
 
   useEffect(() => {
-    reset(defaultValues);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [patient?.id]);
+    reset(
+      patient
+        ? {
+            fullName: patient.fullName,
+            cpf: maskCpf(patient.cpf),
+            phone: patient.phone,
+            birthDate: patient.birthDate.slice(0, 10),
+            email: patient.email ?? '',
+            observations: patient.observations ?? '',
+          }
+        : { fullName: '', cpf: '', phone: '', birthDate: '', email: '', observations: '' },
+    );
+  }, [patient, reset]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

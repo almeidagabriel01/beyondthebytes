@@ -27,8 +27,7 @@ export function CalendarioClient({ initialSummary }: CalendarioClientProps) {
   useEffect(() => {
     setOnNewAppointment(() => setShowNewModal(true));
     return () => setOnNewAppointment(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setOnNewAppointment, setShowNewModal]);
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth() + 1;

@@ -10,8 +10,7 @@ import { useTopBarSlot } from '@/context/topbar-slot';
 import type { AppointmentResponse } from '@medschedule/shared';
 
 export function AgendaClient() {
-  const today = new Date();
-  const [date, setDate] = useState<Date>(today);
+  const [date, setDate] = useState<Date>(new Date());
   const [showNewModal, setShowNewModal] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<AppointmentResponse | null>(null);
 
@@ -44,7 +43,7 @@ export function AgendaClient() {
         </button>
         <button
           type="button"
-          onClick={() => setDate(today)}
+          onClick={() => setDate(new Date())}
           className="px-4 py-2 text-[14px] font-medium text-[#0f172a] flex items-center gap-2 hover:bg-[#e2e8f0] rounded-md transition-colors"
         >
           {dateLabel}
@@ -68,8 +67,7 @@ export function AgendaClient() {
       setRightSlot(null);
       setOnNewAppointment(null);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateLabel]);
+  }, [dateLabel, setRightSlot, setOnNewAppointment, setDate, setShowNewModal]);
 
   return (
     <>
