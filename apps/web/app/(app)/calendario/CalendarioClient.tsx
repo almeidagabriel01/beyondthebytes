@@ -108,7 +108,6 @@ export function CalendarioClient({ initialSummary }: CalendarioClientProps) {
           <div className="w-80 xl:w-96 border-l border-[#cbd5e1] bg-white overflow-y-auto p-4 shrink-0">
             <DayPanel
               selectedDay={selectedDay}
-              onNewAppointment={() => setShowNewModal(true)}
               onCancelAppointment={(appt) => setCancelTarget(appt)}
             />
           </div>
