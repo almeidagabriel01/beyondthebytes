@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { serverEnv } from '@/lib/env.server';
 
-// Server-only env — import after Next.js has loaded env files
-const getSecret = () => new TextEncoder().encode(process.env['JWT_SECRET'] ?? '');
+// Lazy: validates JWT_SECRET on first request, not at build/import time.
+const getSecret = () => new TextEncoder().encode(serverEnv().JWT_SECRET);
 
 const PUBLIC_PATHS = ['/login', '/favicon.ico', '/_next', '/api'];
 
