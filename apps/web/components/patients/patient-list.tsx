@@ -76,23 +76,32 @@ interface PatientRowProps {
 
 function PatientRow({ patient, onEdit, onDelete, onSelect }: PatientRowProps) {
   return (
-    <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors group">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(patient.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect(patient.id);
+        }
+      }}
+      className="flex items-center gap-4 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer focus:outline-none focus:bg-gray-50"
+      aria-label={`Abrir paciente ${patient.fullName}`}
+    >
       <PatientAvatar name={patient.fullName} />
       <div className="flex-1 min-w-0">
-        <button
-          type="button"
-          onClick={() => onSelect(patient.id)}
-          className="text-sm font-medium text-gray-900 truncate hover:text-blue-600 hover:underline transition-colors block text-left w-full"
-        >
-          {patient.fullName}
-        </button>
+        <p className="text-sm font-medium text-gray-900 truncate">{patient.fullName}</p>
         <p className="text-xs text-gray-500">{formatCpfDisplay(patient.cpf)}</p>
       </div>
       <p className="text-xs text-gray-400 hidden sm:block">{patient.phone}</p>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
         <button
           type="button"
-          onClick={() => onEdit(patient)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(patient);
+          }}
           className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
           aria-label={`Editar ${patient.fullName}`}
         >
@@ -100,7 +109,10 @@ function PatientRow({ patient, onEdit, onDelete, onSelect }: PatientRowProps) {
         </button>
         <button
           type="button"
-          onClick={() => onDelete(patient)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(patient);
+          }}
           className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
           aria-label={`Excluir ${patient.fullName}`}
         >

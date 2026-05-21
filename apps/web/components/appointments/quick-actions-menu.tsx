@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import type { AppointmentResponse, AppointmentStatus } from '@medschedule/shared';
 import { canTransition } from '@medschedule/shared';
@@ -35,20 +36,42 @@ export function QuickActionsMenu({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
   const available = QUICK_ACTIONS.filter((a) => canTransition(appointment.status, a.to));
 
+  // Position the portaled menu relative to the trigger button.
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setMenuPosition({
+      top: rect.bottom + 4,
+      right: window.innerWidth - rect.right,
+    });
+  }, [open]);
+
+  // Close on outside click (in portal) and on viewport scroll/resize.
   const handleClickOutside = useCallback((e: MouseEvent) => {
-    if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-      setOpen(false);
-    }
+    const target = e.target as Node;
+    if (triggerRef.current?.contains(target)) return;
+    if (menuRef.current?.contains(target)) return;
+    setOpen(false);
   }, []);
 
   useEffect(() => {
-    if (open) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    if (!open) return;
+    document.addEventListener('mousedown', handleClickOutside);
+    const close = () => setOpen(false);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
   }, [open, handleClickOutside]);
 
   if (available.length === 0) return null;
@@ -77,15 +100,18 @@ export function QuickActionsMenu({
   }
 
   return (
-    <div ref={menuRef} className="relative" onClick={(e) => e.stopPropagation()}>
+    <div className="relative inline-flex" onClick={(e) => e.stopPropagation()}>
       {error && (
         <div className="absolute right-0 bottom-full mb-1 z-50 bg-[#ffdad6] text-[#ba1a1a] text-[11px] rounded-md px-2 py-1 whitespace-nowrap shadow-sm border border-[#ba1a1a]/20">
           {error}
         </div>
       )}
       <button
+        ref={triggerRef}
         type="button"
         aria-label="Ações rápidas"
+        aria-haspopup="menu"
+        aria-expanded={open}
         disabled={loading}
         onClick={(e) => {
           e.preventDefault();
@@ -100,25 +126,36 @@ export function QuickActionsMenu({
         </span>
       </button>
 
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white rounded-xl border border-[#e2e8f0] shadow-[0_8px_24px_rgba(15,23,42,0.1)] py-1 min-w-[180px]">
-          {available.map((action) => (
-            <button
-              key={action.to}
-              type="button"
-              onClick={(e) => handleAction(action, e)}
-              className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-left hover:bg-[#f8fafc] transition-colors ${
-                action.danger ? 'text-[#ba1a1a]' : 'text-[#0f172a]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px] leading-none">
-                {action.icon}
-              </span>
-              {action.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {open &&
+        menuPosition &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            style={{ top: menuPosition.top, right: menuPosition.right }}
+            className="fixed z-[60] bg-white rounded-xl border border-[#e2e8f0] shadow-[0_8px_24px_rgba(15,23,42,0.1)] py-1 min-w-[180px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {available.map((action) => (
+              <button
+                key={action.to}
+                type="button"
+                role="menuitem"
+                onClick={(e) => handleAction(action, e)}
+                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-left hover:bg-[#f8fafc] transition-colors ${
+                  action.danger ? 'text-[#ba1a1a]' : 'text-[#0f172a]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px] leading-none">
+                  {action.icon}
+                </span>
+                {action.label}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
