@@ -1,6 +1,6 @@
 import type { AppointmentResponse } from '@medschedule/shared';
 
-export function getBrtHour(d: Date): number {
+function getBrtHour(d: Date): number {
   return parseInt(
     new Intl.DateTimeFormat('en-US', {
       timeZone: 'America/Sao_Paulo',
