@@ -56,10 +56,16 @@ export function DayCell({ day, currentMonth, isSelected, summary, onSelect }: Da
   if (isSelected) {
     cellClass += ' shadow-[inset_0_0_0_2px_#4648d4] bg-[#e1e0ff]/20';
   } else if (isWeekend) {
-    cellClass += ' bg-[#f8fafc] hover:bg-[#f1f5f9]';
+    cellClass += ' bg-white hover:bg-[#f1f5f9]';
   } else {
     cellClass += ' bg-white hover:bg-[#f8fafc]';
   }
+
+  const dayNumColor = isWeekend ? 'text-[#475569]' : 'text-[#0f172a]';
+
+  const totalCount = summary
+    ? Object.values(summary.counts as Record<string, number>).reduce((a, b) => a + b, 0)
+    : 0;
 
   return (
     <div
@@ -79,26 +85,34 @@ export function DayCell({ day, currentMonth, isSelected, summary, onSelect }: Da
     >
       {/* Day number */}
       {today ? (
-        <span className="w-7 h-7 bg-[#4648d4] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+        <span className="w-7 h-7 bg-[#4648d4] text-white rounded-full flex items-center justify-center text-[13px] font-bold shadow-sm">
           {day.getDate()}
         </span>
       ) : (
-        <span className="w-7 h-7 flex items-center justify-center text-sm text-[#0f172a]">
+        <span
+          className={`w-7 h-7 flex items-center justify-center text-[13px] font-medium ${dayNumColor}`}
+        >
           {day.getDate()}
         </span>
       )}
 
-      {/* Dots */}
-      {dots.length > 0 && (
-        <div className="flex items-center gap-0.5 mt-1 flex-wrap justify-center">
-          {dots.map((color, idx) => (
-            <span
-              key={idx}
-              className={`w-1.5 h-1.5 rounded-full ${DOT_COLOR_CLASS[color]}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+      {/* Today: show count label; other days: show dots */}
+      {today && totalCount > 0 ? (
+        <span className="mt-1 text-[10px] bg-white border border-[#cbd5e1] border-l-2 border-l-[#4648d4] rounded px-1.5 py-0.5 truncate text-[#0f172a] font-medium max-w-full">
+          {totalCount} Consultas
+        </span>
+      ) : (
+        dots.length > 0 && (
+          <div className="flex items-center gap-0.5 mt-1 flex-wrap justify-center">
+            {dots.map((color, idx) => (
+              <span
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full ${DOT_COLOR_CLASS[color]}`}
+                aria-hidden="true"
+              />
+            ))}
+          </div>
+        )
       )}
     </div>
   );

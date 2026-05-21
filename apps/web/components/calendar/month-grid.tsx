@@ -41,7 +41,7 @@ export function MonthGrid({ month, selectedDay, summary, onDaySelect }: MonthGri
         {WEEKDAY_HEADERS.map((label) => (
           <div
             key={label}
-            className="py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-[#475569]"
+            className="py-3 text-center text-[11px] font-medium uppercase tracking-wider text-[#475569]"
           >
             {label}
           </div>
