@@ -84,9 +84,10 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
         </div>
       </div>
 
-      {/* Card 2 — Consultas de Hoje */}
-      <div className="bg-white rounded-xl border border-[#cbd5e1] shadow-sm">
-        <div className="p-5 border-b border-[#cbd5e1] flex justify-between items-center">
+      {/* Card 2 — Consultas de Hoje. On desktop (xl), constrain height so the list
+          scrolls inside the card instead of clipping. On mobile, let it flow naturally. */}
+      <div className="bg-white rounded-xl border border-[#cbd5e1] shadow-sm flex flex-col xl:min-h-0 xl:max-h-[calc(100vh-300px)]">
+        <div className="p-5 border-b border-[#cbd5e1] flex justify-between items-center shrink-0">
           <h4 className="text-[18px] font-semibold text-[#0f172a]">Consultas de Hoje</h4>
           <Link
             href="/consultas"
@@ -96,7 +97,7 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
           </Link>
         </div>
 
-        <div className="p-4 flex flex-col gap-6">
+        <div className="p-4 flex flex-col gap-6 xl:overflow-y-auto xl:flex-1 xl:min-h-0">
           {/* Loading */}
           {status === 'pending' && (
             <div className="flex flex-col gap-2">
