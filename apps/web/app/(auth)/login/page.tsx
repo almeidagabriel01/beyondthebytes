@@ -4,14 +4,12 @@ import { Suspense, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { LoginRequestSchema, type LoginRequest } from '@medschedule/shared';
 import { clientEnv } from '@/lib/env';
 
 function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') ?? '/dashboard';
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -44,7 +42,8 @@ function LoginForm() {
       return res.json();
     },
     onSuccess: () => {
-      router.push(redirectTo);
+      // Always land on dashboard (PDF: "Dashboard é a tela inicial operacional").
+      router.push('/dashboard');
     },
   });
 

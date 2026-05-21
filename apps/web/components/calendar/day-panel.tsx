@@ -41,8 +41,7 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
   const aguardandoCount = all.filter((a) => a.status === 'AGUARDANDO').length;
   const finalizadosCount = all.filter((a) => a.status === 'REALIZADO').length;
 
-  const { manha, tarde: tardeRaw, noite } = groupByPeriod(all);
-  const tarde = [...tardeRaw, ...noite];
+  const { manha, tarde, noite } = groupByPeriod(all);
 
   return (
     <>
@@ -171,6 +170,36 @@ export function DayPanel({ selectedDay, onCancelAppointment }: DayPanelProps) {
                   </h5>
                   <div className="flex flex-col gap-3">
                     {tarde.map((appt) => (
+                      <div key={appt.id} className="relative group">
+                        <Link href={`/consultas/${appt.id}`} className="block">
+                          <AppointmentCard appointment={appt} variant="calendar" />
+                        </Link>
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <QuickActionsMenu
+                            appointment={appt}
+                            queryKey={['appointments-day', isoDate]}
+                            onCancelRequest={onCancelAppointment}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {noite.length > 0 && (
+                <section>
+                  <h5 className="text-[11px] font-medium uppercase tracking-wider text-[#94a3b8] mb-3 flex items-center gap-2">
+                    <span
+                      className="material-symbols-outlined text-[16px] leading-none"
+                      aria-hidden="true"
+                    >
+                      dark_mode
+                    </span>
+                    Noite
+                  </h5>
+                  <div className="flex flex-col gap-3">
+                    {noite.map((appt) => (
                       <div key={appt.id} className="relative group">
                         <Link href={`/consultas/${appt.id}`} className="block">
                           <AppointmentCard appointment={appt} variant="calendar" />
