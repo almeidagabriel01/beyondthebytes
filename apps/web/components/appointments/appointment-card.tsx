@@ -3,6 +3,7 @@
 import { formatSlotTime } from '@medschedule/shared';
 import type { AppointmentResponse } from '@medschedule/shared';
 import { StatusBadge } from '@/components/shared/status-badge';
+import { isVencido } from '@/lib/appointment-status';
 
 const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
   CONSULTA: 'Consulta',
@@ -11,16 +12,18 @@ const TYPE_LABELS: Record<AppointmentResponse['type'], string> = {
   PROCEDIMENTO: 'Procedimento',
 };
 
-const LATE_ELIGIBLE_STATUSES = new Set<AppointmentResponse['status']>([
-  'AGENDADO',
-  'CONFIRMADO',
-  'AGUARDANDO',
-]);
-
 interface AppointmentCardProps {
   appointment: AppointmentResponse;
   variant?: 'agenda' | 'calendar';
   onClick?: (() => void) | undefined;
+}
+
+function VencidoPill() {
+  return (
+    <span className="inline-flex items-center bg-[#ffdcc5] text-[#703700] text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-semibold shrink-0">
+      Vencido
+    </span>
+  );
 }
 
 export function AppointmentCard({
@@ -28,9 +31,7 @@ export function AppointmentCard({
   variant = 'agenda',
   onClick,
 }: AppointmentCardProps) {
-  const now = new Date();
-  const startsAt = new Date(appt.startsAt);
-  const isLate = startsAt < now && LATE_ELIGIBLE_STATUSES.has(appt.status);
+  const vencido = isVencido(appt);
 
   const isCancelled = appt.status === 'CANCELADO';
   const isRealizado = appt.status === 'REALIZADO';
@@ -50,7 +51,8 @@ export function AppointmentCard({
 
   // ── Calendar variant ────────────────────────────────────────────────────────
   if (variant === 'calendar') {
-    let outerClass = 'relative bg-white border rounded-lg p-3 flex gap-4 transition-shadow';
+    let outerClass =
+      'relative bg-white border rounded-lg p-3 flex gap-4 transition-shadow overflow-hidden';
 
     if (isCancelled) {
       outerClass += ' border-dashed border-[#e2e8f0] opacity-60 cursor-not-allowed';
@@ -58,37 +60,36 @@ export function AppointmentCard({
       outerClass += ' border-[#e2e8f0] opacity-70 hover:shadow-md cursor-pointer';
     } else if (isEmAtendimento) {
       outerClass +=
-        ' border-2 border-[#4648d4] shadow-[0_4px_12px_rgba(15,23,42,0.05)] overflow-hidden cursor-pointer';
+        ' border-2 border-[#4648d4] shadow-[0_4px_12px_rgba(15,23,42,0.05)] cursor-pointer';
+    } else if (vencido) {
+      outerClass += ' border-[#e2e8f0] hover:shadow-md cursor-pointer';
     } else {
       outerClass += ' border-[#e2e8f0] hover:shadow-md cursor-pointer';
     }
 
-    const separatorBorder = isEmAtendimento
-      ? 'border-[#4648d4]'
-      : isLate
-        ? 'border-red-300'
-        : 'border-[#cbd5e1]';
+    const separatorBorder = isEmAtendimento ? 'border-[#4648d4]' : 'border-[#cbd5e1]';
 
     const timeColor = isEmAtendimento
       ? 'text-[#4648d4]'
       : isRealizado
         ? 'text-[#475569]'
-        : isLate
-          ? 'text-[#ba1a1a]'
-          : isCancelled
-            ? 'text-[#94a3b8]'
-            : 'text-[#0f172a]';
+        : isCancelled
+          ? 'text-[#94a3b8]'
+          : 'text-[#0f172a]';
 
     return (
       <div className={outerClass} {...interactiveProps}>
         {isEmAtendimento && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#4648d4]" aria-hidden="true" />
         )}
+        {vencido && !isEmAtendimento && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#b55d00]" aria-hidden="true" />
+        )}
         <div
-          className={`flex flex-col items-center justify-center min-w-[50px] border-r ${separatorBorder} pr-3 shrink-0 ${isEmAtendimento ? 'pl-1' : ''}`}
+          className={`flex flex-col items-center justify-center min-w-[50px] border-r ${separatorBorder} pr-3 shrink-0 ${isEmAtendimento || vencido ? 'pl-1' : ''}`}
         >
           <span className={`text-[18px] font-semibold leading-tight ${timeColor}`}>
-            {formatSlotTime(startsAt)}
+            {formatSlotTime(new Date(appt.startsAt))}
           </span>
           {!isCancelled && (
             <span className="text-[11px] text-[#94a3b8] mt-0.5">{appt.durationMinutes} min</span>
@@ -101,14 +102,10 @@ export function AppointmentCard({
             >
               {appt.patient.fullName}
             </span>
-            {isLate ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ba1a1a]/10 text-[#ba1a1a] text-[11px] font-semibold shrink-0">
-                <span className="material-symbols-outlined text-[14px] leading-none">warning</span>
-                Atrasado
-              </span>
-            ) : (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {vencido && <VencidoPill />}
               <StatusBadge status={appt.status} />
-            )}
+            </div>
           </div>
           <span className="text-[12px] text-[#64748b]">{TYPE_LABELS[appt.type]}</span>
           {appt.insurance && (
@@ -122,7 +119,7 @@ export function AppointmentCard({
   }
 
   // ── Agenda variant ──────────────────────────────────────────────────────────
-  let outerClass = 'relative bg-white rounded-lg p-4 flex gap-4 transition-shadow';
+  let outerClass = 'relative bg-white rounded-lg p-4 flex gap-4 transition-shadow overflow-hidden';
 
   if (isCancelled) {
     outerClass += ' border border-dashed border-[#e2e8f0] opacity-60 cursor-not-allowed';
@@ -131,10 +128,7 @@ export function AppointmentCard({
       ' border border-[#e2e8f0] opacity-70 hover:shadow-[0_4px_12px_rgba(15,23,42,0.05)] cursor-pointer';
   } else if (isEmAtendimento) {
     outerClass +=
-      ' border-2 border-[#4648d4] shadow-[0_4px_12px_rgba(15,23,42,0.05)] overflow-hidden cursor-pointer';
-  } else if (isLate) {
-    outerClass +=
-      ' border border-red-200 bg-red-50 hover:shadow-[0_4px_12px_rgba(15,23,42,0.05)] cursor-pointer';
+      ' border-2 border-[#4648d4] shadow-[0_4px_12px_rgba(15,23,42,0.05)] cursor-pointer';
   } else {
     outerClass +=
       ' border border-[#e2e8f0] hover:shadow-[0_4px_12px_rgba(15,23,42,0.05)] cursor-pointer';
@@ -145,26 +139,19 @@ export function AppointmentCard({
     ? 'text-[#4648d4]'
     : isRealizado
       ? 'text-[#475569]'
-      : isLate
-        ? 'text-[#ba1a1a]'
-        : isCancelled
-          ? 'text-[#94a3b8]'
-          : 'text-[#0f172a]';
+      : isCancelled
+        ? 'text-[#94a3b8]'
+        : 'text-[#0f172a]';
 
   // Time font weight — EM_ATENDIMENTO is bold
   const timeFontClass = isEmAtendimento ? 'font-bold' : 'font-semibold';
-
-  // Duration text color — inherits time color for EM_ATENDIMENTO and isLate, else outline
-  const durationClass = isEmAtendimento || isLate ? '' : 'text-[#94a3b8]';
 
   // Divider color
   const dividerColor = isEmAtendimento
     ? 'bg-[#4648d4]/20'
     : isRealizado || isCancelled
       ? 'bg-[#cbd5e1]'
-      : isLate
-        ? 'bg-[#ba1a1a]/30'
-        : 'bg-[#e2e8f0]';
+      : 'bg-[#e2e8f0]';
 
   // Name color + strikethrough for cancelled
   const nameClass = isCancelled ? 'text-[#94a3b8] line-through' : 'text-[#0f172a]';
@@ -181,13 +168,18 @@ export function AppointmentCard({
       {isEmAtendimento && (
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#4648d4]" aria-hidden="true" />
       )}
+      {vencido && !isEmAtendimento && (
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#b55d00]" aria-hidden="true" />
+      )}
       {/* Time column */}
       <div
-        className={`min-w-[60px] flex flex-col items-end justify-center text-right shrink-0 ${timeColClass}`}
+        className={`min-w-[60px] flex flex-col items-end justify-center text-right shrink-0 ${timeColClass} ${vencido && !isEmAtendimento ? 'pl-1' : ''}`}
       >
-        <span className={`text-[14px] ${timeFontClass}`}>{formatSlotTime(startsAt)}</span>
+        <span className={`text-[14px] ${timeFontClass}`}>
+          {formatSlotTime(new Date(appt.startsAt))}
+        </span>
         {!isCancelled && (
-          <span className={`text-[11px] mt-0.5 ${durationClass}`}>{appt.durationMinutes} min</span>
+          <span className="text-[11px] mt-0.5 text-[#94a3b8]">{appt.durationMinutes} min</span>
         )}
       </div>
       {/* Vertical divider */}
@@ -198,14 +190,10 @@ export function AppointmentCard({
           <span className={`text-[16px] font-medium truncate ${nameClass}`}>
             {appt.patient.fullName}
           </span>
-          {isLate ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#ba1a1a]/10 text-[#ba1a1a] text-[11px] font-semibold shrink-0">
-              <span className="material-symbols-outlined text-[14px] leading-none">warning</span>
-              Atrasado
-            </span>
-          ) : (
+          <div className="flex items-center gap-1.5 shrink-0">
+            {vencido && <VencidoPill />}
             <StatusBadge status={appt.status} />
-          )}
+          </div>
         </div>
         <span className={`text-[13px] ${typeInsuranceColor}`}>{typeInsuranceText}</span>
       </div>

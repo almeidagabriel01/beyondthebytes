@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { NextAppointment } from '@medschedule/shared';
 import { StatusBadge } from '@/components/shared/status-badge';
+import { isVencido } from '@/lib/appointment-status';
 
 interface Props {
   items: NextAppointment[];
@@ -28,25 +29,41 @@ export function NextAppointmentsPanel({ items }: Props) {
         </p>
       ) : (
         <ul className="divide-y divide-[#e2e8f0]">
-          {items.map((appt) => (
-            <li key={appt.id}>
-              <Link
-                href={`/consultas?id=${appt.id}`}
-                className="flex items-center gap-4 px-5 py-3 hover:bg-[#f8fafc] transition-colors"
-              >
-                <span className="text-[13px] font-semibold tabular-nums text-[#0f172a] w-14">
-                  {format(new Date(appt.startsAt), 'HH:mm', { locale: ptBR })}
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="block text-[14px] font-medium text-[#0f172a] truncate">
-                    {appt.patient.fullName}
+          {items.map((appt) => {
+            const vencido = isVencido(appt);
+            return (
+              <li key={appt.id} className="relative">
+                {vencido && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-0 top-0 bottom-0 w-1 bg-[#b55d00]"
+                  />
+                )}
+                <Link
+                  href={`/consultas?id=${appt.id}`}
+                  className={`flex items-center gap-4 px-5 py-3 hover:bg-[#f8fafc] transition-colors ${vencido ? 'pl-6' : ''}`}
+                >
+                  <span className="text-[13px] font-semibold tabular-nums text-[#0f172a] w-14">
+                    {format(new Date(appt.startsAt), 'HH:mm', { locale: ptBR })}
                   </span>
-                  <span className="block text-[12px] text-[#64748b]">{appt.type}</span>
-                </span>
-                <StatusBadge status={appt.status} className="text-[11px] px-2.5 py-1" />
-              </Link>
-            </li>
-          ))}
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[14px] font-medium text-[#0f172a] truncate">
+                      {appt.patient.fullName}
+                    </span>
+                    <span className="block text-[12px] text-[#64748b]">{appt.type}</span>
+                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {vencido && (
+                      <span className="inline-flex items-center bg-[#ffdcc5] text-[#703700] text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-semibold">
+                        Vencido
+                      </span>
+                    )}
+                    <StatusBadge status={appt.status} className="text-[11px] px-2.5 py-1" />
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
