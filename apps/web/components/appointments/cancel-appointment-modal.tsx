@@ -80,7 +80,7 @@ export function CancelAppointmentModal({ appointment, onClose }: CancelAppointme
         {/* Body */}
         <div className="px-6 pb-4">
           <label htmlFor="cancel-reason" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Motivo do cancelamento <span className="text-gray-400 font-normal">(opcional)</span>
+            Motivo do cancelamento <span className="text-[#ba1a1a]">*</span>
           </label>
           <div className="relative">
             <textarea
@@ -90,7 +90,7 @@ export function CancelAppointmentModal({ appointment, onClose }: CancelAppointme
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Informe o motivo do cancelamento..."
-              className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2.5 text-sm outline-none transition resize-none focus:border-red-300 focus:ring-2 focus:ring-red-200/50"
+              className="w-full rounded-xl bg-gray-50 border border-gray-200 text-gray-900 p-3 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200 transition-all resize-none shadow-sm text-sm"
             />
             <span className={`absolute bottom-2.5 right-3 text-xs tabular-nums ${charCountClass}`}>
               {charCount}/{MAX_REASON}
@@ -105,11 +105,11 @@ export function CancelAppointmentModal({ appointment, onClose }: CancelAppointme
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 rounded-b-[24px] flex items-center justify-end gap-3 px-6 py-4">
+        <div className="mt-2 bg-gray-50 rounded-b-[24px] flex items-center justify-end gap-3 px-6 py-6 border-t border-gray-200">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-white transition-colors"
+            className="rounded-lg px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-colors"
           >
             Voltar
           </button>
@@ -117,7 +117,7 @@ export function CancelAppointmentModal({ appointment, onClose }: CancelAppointme
             type="button"
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending}
-            className="flex items-center gap-2 rounded-lg bg-[#ba1a1a] px-4 py-2 text-sm font-medium text-white hover:bg-[#a01515] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 rounded-lg bg-[#ba1a1a] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#a61717] shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {mutation.isPending && (
               <span className="material-symbols-outlined text-base animate-spin leading-none">

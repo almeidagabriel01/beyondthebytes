@@ -104,7 +104,7 @@ export function PatientQuickRegisterModal({
   const inputClass = (hasError: boolean) =>
     cn(
       'w-full rounded-lg border px-3 py-2 text-sm outline-none transition',
-      'focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20',
+      'focus:border-[#4648d4] focus:ring-2 focus:ring-[#4648d4]/20',
       hasError ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white',
     );
 
@@ -129,9 +129,14 @@ export function PatientQuickRegisterModal({
           >
             <span className="material-symbols-outlined text-xl leading-none">arrow_back</span>
           </button>
-          <span className="material-symbols-outlined text-blue-600">person_add</span>
+          <span
+            className="material-symbols-outlined text-[#4648d4]"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            person_add
+          </span>
           <h2 id="quick-register-title" className="text-lg font-semibold text-gray-900">
-            Cadastrar Novo Paciente
+            Cadastrar Paciente
           </h2>
           <button
             type="button"
@@ -285,14 +290,14 @@ export function PatientQuickRegisterModal({
             form=""
             onClick={onSubmit}
             disabled={mutation.isPending}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 rounded-lg bg-[#4648d4] px-5 py-2 text-sm font-medium text-white hover:bg-[#3323cc] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             {mutation.isPending && (
               <span className="material-symbols-outlined text-base animate-spin leading-none">
                 progress_activity
               </span>
             )}
-            Cadastrar Paciente
+            Cadastrar
           </button>
         </div>
       </div>
