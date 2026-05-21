@@ -8,7 +8,7 @@ import { NotesService } from './notes.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const TIPTAP_DOC = {
-  type: 'doc',
+  type: 'doc' as const,
   content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Paciente estável.' }] }],
 };
 
@@ -145,7 +145,7 @@ describe('NotesService', () => {
     });
 
     it('appends new revision atomically with note updatedAt touch', async () => {
-      const newDoc = { type: 'doc', content: [] };
+      const newDoc = { type: 'doc' as const, content: [] };
       const newRev = {
         id: 'rev-2',
         content: newDoc,
